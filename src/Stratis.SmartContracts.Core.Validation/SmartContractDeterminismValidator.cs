@@ -17,10 +17,8 @@ namespace Stratis.SmartContracts.Core.Validation
 
             if (type == null)
                 return new SmartContractValidationResult(Enumerable.Empty<ValidationResult>());
-
-            var policyFactory = new DeterminismPolicyFactory();
-
-            var policy = policyFactory.CreatePolicy();
+           
+            var policy = DeterminismPolicyFactory.CreatePolicy();
 
             var validator = new TypePolicyValidator(policy);
 
