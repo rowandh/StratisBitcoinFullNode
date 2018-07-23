@@ -22,7 +22,7 @@ namespace Stratis.SmartContracts.Core.Validation
 
             var policy = policyFactory.CreatePolicy();
 
-            var validator = new TypeDefValidator(policy);
+            var validator = new TypePolicyValidator(policy);
 
             var validationResult = validator.Validate(type).ToList();
 
