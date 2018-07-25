@@ -29,7 +29,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Consensus.Rules
         }
     }
 
-    [PartialValidationRule]
+    [FullValidationRule]
     public sealed class SmartContractLoadCoinviewRule : UtxoStoreConsensusRule
     {
         /// <inheritdoc />
