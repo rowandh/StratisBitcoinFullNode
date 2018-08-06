@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
@@ -25,7 +26,11 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
         private readonly PersistentState persistentState;
         private readonly ContractStateRepositoryRoot state;
         private readonly SmartContractValidator validator;
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> master
         private static readonly Address TestAddress = (Address)"mipcBbFg9gMiCh81Kj8tqqdgoZub1ZJRfn";
         
         public ReflectionVirtualMachineTests()
@@ -40,8 +45,12 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
             this.state = new ContractStateRepositoryRoot(new NoDeleteSource<byte[], byte[]>(new MemoryDictionarySource()));
             var persistenceStrategy = new MeteredPersistenceStrategy(this.state, this.gasMeter, this.keyEncodingStrategy);
             this.persistentState = new PersistentState(persistenceStrategy, TestAddress.ToUint160(this.network), this.network);
+<<<<<<< HEAD
 
             this.validator = new SmartContractValidator();
+=======
+            this.validator = new SmartContractValidator(new List<ISmartContractValidator>());
+>>>>>>> master
         }
 
         [Fact]
@@ -56,8 +65,12 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
 
             //Set the calldata for the transaction----------
             var callData = new CallData((Gas)5000000, new uint160(1), "StoreData");
+<<<<<<< HEAD
 
             Money value = Money.Zero;
+=======
+            var value = Money.Zero;
+>>>>>>> master
             //-------------------------------------------------------
 
             var repository = new ContractStateRepositoryRoot(new NoDeleteSource<byte[], byte[]>(new MemoryDictionarySource()));
@@ -69,16 +82,26 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                 new InternalTransactionExecutorFactory(this.keyEncodingStrategy, this.loggerFactory, this.network);
             var vm = new ReflectionVirtualMachine(this.validator, internalTxExecutorFactory, this.loggerFactory, this.network);
 
+<<<<<<< HEAD
             uint160 address = TestAddress.ToUint160(this.network);
+=======
+            var address = TestAddress.ToUint160(this.network);
+>>>>>>> master
 
             var transactionContext = new TransactionContext(uint256.One, 1, address, address, 0);
 
             repository.SetCode(callData.ContractAddress, contractExecutionCode);
             repository.SetContractType(callData.ContractAddress, "StorageTest");
 
+<<<<<<< HEAD
             VmExecutionResult result = vm.ExecuteMethod(gasMeter,
                 repository,
                 callData,
+=======
+            var result = vm.ExecuteMethod(gasMeter, 
+                repository, 
+                callData, 
+>>>>>>> master
                 transactionContext);
 
             stateRepository.Commit();
@@ -96,11 +119,19 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
 
             byte[] contractExecutionCode = compilationResult.Compilation;
             //-------------------------------------------------------
+<<<<<<< HEAD
 
             //Set the calldata for the transaction----------
             var methodParameters = new object[] { (short)5 };
             var callData = new CallData((Gas)5000000, new uint160(1), "StoreData", methodParameters);
             Money value = Money.Zero;
+=======
+            
+            //Set the calldata for the transaction----------
+            var methodParameters = new object[] { (short)5 };
+            var callData = new CallData((Gas)5000000, new uint160(1), "StoreData", methodParameters);
+            var value = Money.Zero;
+>>>>>>> master
             //-------------------------------------------------------
 
             var repository = new ContractStateRepositoryRoot(new NoDeleteSource<byte[], byte[]>(new MemoryDictionarySource()));
@@ -112,16 +143,26 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                 new InternalTransactionExecutorFactory(this.keyEncodingStrategy, this.loggerFactory, this.network);
             var vm = new ReflectionVirtualMachine(this.validator, internalTxExecutorFactory, this.loggerFactory, this.network);
 
+<<<<<<< HEAD
             uint160 address = TestAddress.ToUint160(this.network);
+=======
+            var address = TestAddress.ToUint160(this.network);
+>>>>>>> master
 
             var transactionContext = new TransactionContext(uint256.One, 1, address, address, value);
 
             repository.SetCode(callData.ContractAddress, contractExecutionCode);
             repository.SetContractType(callData.ContractAddress, "StorageTestWithParameters");
 
+<<<<<<< HEAD
             VmExecutionResult result = vm.ExecuteMethod(gasMeter,
                 repository,
                 callData,
+=======
+            var result = vm.ExecuteMethod(gasMeter, 
+                repository, 
+                callData, 
+>>>>>>> master
                 transactionContext);
 
             track.Commit();
@@ -144,8 +185,12 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
             //Set the calldata for the transaction----------
             var methodParameters = new object[] { (ulong)5 };
             var callData = new CreateData((Gas)5000000, contractExecutionCode, methodParameters);
+<<<<<<< HEAD
 
             Money value = Money.Zero;
+=======
+            var value = Money.Zero;
+>>>>>>> master
             //-------------------------------------------------------            
 
             var repository = new ContractStateRepositoryRoot(new NoDeleteSource<byte[], byte[]>(new MemoryDictionarySource()));
@@ -166,8 +211,13 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                 amount: value
                 );
 
+<<<<<<< HEAD
             VmExecutionResult result = vm.Create(gasMeter,
                 repository,
+=======
+            var result = vm.Create(gasMeter,
+                repository, 
+>>>>>>> master
                 callData,
                 transactionContext);
 

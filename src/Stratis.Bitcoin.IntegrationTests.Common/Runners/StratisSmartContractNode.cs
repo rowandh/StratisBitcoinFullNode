@@ -29,8 +29,13 @@ namespace Stratis.Bitcoin.IntegrationTests.Common.Runners
                 .AddRPC()
                     .AddSmartContracts()
                     .UseSmartContractConsensus()
+<<<<<<< HEAD
                     .UseSmartContractWallet()
                     .UseSmartContractPowMining()
+=======
+                    .UseSmartContractMining()
+                    .UseSmartContractWallet()
+>>>>>>> master
                     .UseReflectionExecutor()
                 .MockIBD()
                 .Build();

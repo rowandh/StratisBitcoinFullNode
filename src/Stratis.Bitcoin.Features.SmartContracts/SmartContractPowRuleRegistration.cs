@@ -50,7 +50,11 @@ namespace Stratis.Bitcoin.Features.SmartContracts
                 // Smart contract specific rules
                 new TxOutSmartContractExecRule(),
                 new OpSpendRule(),
+<<<<<<< HEAD:src/Stratis.Bitcoin.Features.SmartContracts/SmartContractPowRuleRegistration.cs
                 new SmartContractPowCoinviewRule(), // implements BIP68, MaxSigOps and BlockReward 
+=======
+                new SmartContractCoinviewRule(), // implements BIP68, MaxSigOps and BlockReward calculation
+>>>>>>> master:src/Stratis.Bitcoin.Features.SmartContracts/SmartContractRuleRegistration.cs
                 new SmartContractSaveCoinviewRule()
             };
 

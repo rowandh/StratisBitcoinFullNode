@@ -16,11 +16,19 @@
     <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
     <Version>1.1.12-beta</Version>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+<<<<<<< HEAD
 	  <CodeAnalysisRuleSet>..\None.ruleset</CodeAnalysisRuleSet>
+=======
+	<CodeAnalysisRuleSet>..\None.ruleset</CodeAnalysisRuleSet>
+>>>>>>> master
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\NBitcoin\NBitcoin.csproj" />
   </ItemGroup>
 
+<<<<<<< HEAD
 </Project>
+=======
+</Project>
+>>>>>>> master

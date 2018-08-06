@@ -29,7 +29,11 @@ namespace Stratis.Bitcoin.IntegrationTests.Common.MockChain
 
             for (int i = 0; i < numNodes; i++)
             {
+<<<<<<< HEAD
                 CoreNode node = this.builder.CreateSmartContractPowNode();
+=======
+                CoreNode node = this.builder.CreateSmartContractNode();
+>>>>>>> master
                 node.Start();
                 // Add other nodes
                 RPCClient rpcClient = node.CreateRPCClient();
