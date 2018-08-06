@@ -11,10 +11,140 @@ namespace Stratis.SmartContracts.Core.Validation
         /// <inheritdoc/>
         public SmartContractValidationResult Validate(SmartContractDecompilation decompilation)
         {
+<<<<<<< HEAD
             ValidationPolicy policy = DeterminismPolicy.Default;
             var validator = new ModulePolicyValidator(policy);
             IEnumerable<ValidationResult> validationResults = validator.Validate(decompilation.ModuleDefinition);
             return new SmartContractValidationResult(validationResults);
+=======
+            var errors = new List<ValidationResult>();
+            var visited = new Dictionary<string, List<ValidationResult>>();
+            IEnumerable<TypeDefinition> contractTypes = decompilation.ModuleDefinition.GetDevelopedTypes();
+
+            foreach(TypeDefinition contractType in contractTypes)
+            {
+                List<MethodDefinition> userMethods = contractType.Methods.Where(method => method.Body != null).ToList();
+                foreach (MethodDefinition userMethod in userMethods)
+                {
+                    ValidateUserMethod(errors, visited, userMethod);
+                    ValidatedReferencedMethods(errors, visited, userMethods, userMethod);
+                }
+            }
+
+            return new SmartContractValidationResult(errors);
+        }
+
+        /// <summary>
+        /// Validates a user defined method in the smart contract.
+        /// </summary>
+        private static void ValidateUserMethod(List<ValidationResult> errors, Dictionary<string, List<ValidationResult>> visited, MethodDefinition userMethod)
+        {
+            if (!TryAddToVisited(visited, userMethod)) return;
+
+            foreach (IMethodDefinitionValidator validator in UserDefinedMethodValidators)
+            {
+                IEnumerable<ValidationResult> validatorResult = validator.Validate(userMethod);
+                if (validatorResult.Any())
+                {
+                    errors.Add(validatorResult.First());
+                    visited[userMethod.FullName] = validatorResult.ToList();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Validates all methods referenced inside of a user method.
+        /// </summary>
+        private void ValidatedReferencedMethods(List<ValidationResult> errors, Dictionary<string, List<ValidationResult>> visited, List<MethodDefinition> userMethods, MethodDefinition userMethod)
+        {
+            foreach (MethodDefinition referencedMethod in GetReferencedMethods(userMethod))
+            {
+                if (userMethods.Contains(referencedMethod))
+                    continue;
+
+                bool isValid = ValidateReferencedMethod(visited, userMethod, referencedMethod);
+                if (!isValid)
+                    errors.Add(NonDeterministicError(userMethod, referencedMethod));
+            }
+        }
+
+        /// <summary>
+        /// Recursively validates all methods referenced inside of a referenced method.
+        /// </summary>
+        private static bool ValidateReferencedMethod(Dictionary<string, List<ValidationResult>> visited, MethodDefinition userMethod, MethodDefinition referencedMethod)
+        {
+            if (TryAddToVisited(visited, referencedMethod))
+            {
+                foreach (MethodDefinition internalMethod in GetReferencedMethods(referencedMethod))
+                {
+                    bool isValid = ValidateReferencedMethod(visited, referencedMethod, internalMethod);
+                    if (!isValid)
+                        return isValid;
+                }
+
+                foreach (IMethodDefinitionValidator validator in NonUserMethodValidators)
+                {
+                    List<ValidationResult> result = validator.Validate(referencedMethod).ToList();
+                    if (result.Any())
+                    {
+                        visited[referencedMethod.FullName] = result;
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+            else
+                return true;
+        }
+
+        /// <summary>
+        /// Methods that are called within a given method body.
+        /// <para>
+        /// This returns all methods, not just the ones that are user defined.
+        /// </para>
+        /// </summary>
+        private static IEnumerable<MethodDefinition> GetReferencedMethods(MethodDefinition methodDefinition)
+        {
+            if (methodDefinition.Body == null)
+                return Enumerable.Empty<MethodDefinition>();
+
+            IEnumerable<MethodDefinition> referenced = methodDefinition.Body.Instructions
+                .Select(instr => instr.Operand)
+                .OfType<MethodReference>()
+                .Where(referencedMethod => !(GreenLightMethods.Contains(referencedMethod.FullName) 
+                                             || GreenLightTypes.Contains(referencedMethod.DeclaringType.FullName)))
+                .Select(m => m.Resolve());
+
+            return referenced;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="visited"></param>
+        /// <param name="method"></param>
+        private static bool TryAddToVisited(Dictionary<string, List<ValidationResult>> visited, MethodDefinition method)
+        {
+            if (visited.ContainsKey(method.FullName))
+                return false;
+            else
+            {
+                visited.Add(method.FullName, new List<ValidationResult>());
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Returns an error when a referenced method is non-deterministic in a containing method.
+        /// <para>I.e. if in method A, method B is referenced and it is non-deterministic, use this method.</para>
+        /// </summary>
+        /// <param name="userMethod">The containing method.</param>
+        /// <param name="referencedMethod">The method that is non-deterministic in the containing method.</param>
+        public static ValidationResult NonDeterministicError(MethodDefinition userMethod, MethodDefinition referencedMethod)
+        {
+            return new MethodDefinitionValidationResult(userMethod, NonDeterministicMethodReference, $"{referencedMethod.FullName} is non-deterministic.");
+>>>>>>> master
         }
     }
 }

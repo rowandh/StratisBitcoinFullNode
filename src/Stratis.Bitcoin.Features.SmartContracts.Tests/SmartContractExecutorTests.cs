@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 using System;
+=======
+﻿using System;
+using System.Collections.Generic;
+>>>>>>> master
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
@@ -43,9 +48,16 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
             this.network = new SmartContractsRegTest();
             this.refundProcessor = new SmartContractResultRefundProcessor(this.loggerFactory);
             this.state = new ContractStateRepositoryRoot(new NoDeleteSource<byte[], byte[]>(new MemoryDictionarySource()));
+<<<<<<< HEAD
             this.transferProcessor = new SmartContractResultTransferProcessor(DateTimeProvider.Default, this.loggerFactory, this.network);
             this.validator = new SmartContractValidator();
             this.internalTxExecutorFactory = new InternalTransactionExecutorFactory(this.keyEncodingStrategy, this.loggerFactory, this.network);
+=======
+            this.transferProcessor = new SmartContractResultTransferProcessor(this.loggerFactory, this.network);
+            this.validator = new SmartContractValidator(new ISmartContractValidator[] { });
+            this.internalTxExecutorFactory = new InternalTransactionExecutorFactory(this.keyEncodingStrategy, this.loggerFactory, this.network);
+            this.validator = new SmartContractValidator(new List<ISmartContractValidator>());
+>>>>>>> master
             this.vm = new ReflectionVirtualMachine(this.validator, this.internalTxExecutorFactory, this.loggerFactory, this.network);
             this.serializer = CallDataSerializer.Default;
         }

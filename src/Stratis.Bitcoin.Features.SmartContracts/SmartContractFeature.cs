@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Collections.Generic;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
@@ -29,6 +30,10 @@ using Stratis.SmartContracts.Core.Receipts;
 using Stratis.SmartContracts.Core.State;
 using Stratis.SmartContracts.Core.Validation;
 using Stratis.SmartContracts.Executor.Reflection;
+<<<<<<< HEAD
+=======
+using Stratis.SmartContracts.Executor.Reflection.Compilation;
+>>>>>>> master
 using Stratis.SmartContracts.Executor.Reflection.Serialization;
 
 namespace Stratis.Bitcoin.Features.SmartContracts
@@ -94,7 +99,11 @@ namespace Stratis.Bitcoin.Features.SmartContracts
         }
 
         /// <summary>
+<<<<<<< HEAD
         /// Configures the node with the smart contract proof of work consensus model.
+=======
+        /// Configures the node with the smart contract consensus model.
+>>>>>>> master
         /// </summary>
         public static IFullNodeBuilder UseSmartContractConsensus(this IFullNodeBuilder fullNodeBuilder)
         {
@@ -114,9 +123,13 @@ namespace Stratis.Bitcoin.Features.SmartContracts
                     services.AddSingleton<ConsensusOptions, ConsensusOptions>();
                     services.AddSingleton<DBreezeCoinView>();
                     services.AddSingleton<ICoinView, CachedCoinView>();
+<<<<<<< HEAD
 
                     services.AddSingleton<LookaheadBlockPuller>().AddSingleton<ILookaheadBlockPuller, LookaheadBlockPuller>(provider => provider.GetService<LookaheadBlockPuller>());
 
+=======
+                    services.AddSingleton<LookaheadBlockPuller>().AddSingleton<ILookaheadBlockPuller, LookaheadBlockPuller>(provider => provider.GetService<LookaheadBlockPuller>());
+>>>>>>> master
                     services.AddSingleton<IConsensusLoop, ConsensusLoop>()
                         .AddSingleton<INetworkDifficulty, ConsensusLoop>(provider => provider.GetService<IConsensusLoop>() as ConsensusLoop)
                         .AddSingleton<IGetUnspentTransaction, ConsensusLoop>(provider => provider.GetService<IConsensusLoop>() as ConsensusLoop);
@@ -125,9 +138,15 @@ namespace Stratis.Bitcoin.Features.SmartContracts
                     services.AddSingleton<ConsensusStats>();
                     services.AddSingleton<ConsensusSettings>();
 
+<<<<<<< HEAD
                     services.AddSingleton<IConsensusRules, SmartContractPowConsensusRuleEngine>();
 
                     fullNodeBuilder.Network.Consensus.Rules = new SmartContractPowRuleRegistration().GetRules();
+=======
+                    services.AddSingleton<IConsensusRules, SmartContractConsensusRules>();
+
+                    fullNodeBuilder.Network.Consensus.Rules = new SmartContractRuleRegistration().GetRules();
+>>>>>>> master
                 });
             });
 
@@ -135,6 +154,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts
         }
 
         /// <summary>
+<<<<<<< HEAD
         /// Configures the node with the smart contract proof of stake consensus model.
         /// </summary>
         public static IFullNodeBuilder UseSmartContractPosConsensus(this IFullNodeBuilder fullNodeBuilder)
@@ -178,6 +198,12 @@ namespace Stratis.Bitcoin.Features.SmartContracts
         /// <para>We inject <see cref="IPowMining"/> with a smart contract block provider and definition.</para>
         /// </summary>
         public static IFullNodeBuilder UseSmartContractPowMining(this IFullNodeBuilder fullNodeBuilder)
+=======
+        /// Adds mining to the smart contract node.
+        /// <para>We inject <see cref="IPowMining"/> with a smart contract block provider and definition.</para>
+        /// </summary>
+        public static IFullNodeBuilder UseSmartContractMining(this IFullNodeBuilder fullNodeBuilder)
+>>>>>>> master
         {
             LoggingConfiguration.RegisterFeatureNamespace<MiningFeature>("mining");
 
@@ -192,6 +218,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts
                     {
                         services.AddSingleton<IPowMining, PowMining>();
                         services.AddSingleton<IBlockProvider, SmartContractBlockProvider>();
+<<<<<<< HEAD
                         services.AddSingleton<BlockDefinition, SmartContractBlockDefinition>();
                         services.AddSingleton<MiningController>();
                         services.AddSingleton<MiningRpcController>();
@@ -227,6 +254,13 @@ namespace Stratis.Bitcoin.Features.SmartContracts
                         services.AddSingleton<MiningController>();
                         services.AddSingleton<StakingController>();
                         services.AddSingleton<StakingRpcController>();
+=======
+                        services.AddSingleton<SmartContractBlockDefinition>();
+                        services.AddSingleton<StakingController>();
+                        services.AddSingleton<MiningRpcController>();
+                        services.AddSingleton<StakingRpcController>();
+                        services.AddSingleton<MiningController>();
+>>>>>>> master
                         services.AddSingleton<MinerSettings>();
                     });
             });
@@ -249,7 +283,16 @@ namespace Stratis.Bitcoin.Features.SmartContracts
                     .FeatureServices(services =>
                     {
                         // Validator
+<<<<<<< HEAD
                         services.AddSingleton<ISmartContractValidator, SmartContractValidator>();
+=======
+                        ISmartContractValidator validator = new SmartContractValidator(new List<ISmartContractValidator>
+                        {
+                            new SmartContractFormatValidator(ReferencedAssemblyResolver.AllowedAssemblies),
+                            new SmartContractDeterminismValidator()
+                        });
+                        services.AddSingleton(validator);
+>>>>>>> master
 
                         // Executor et al.
                         services.AddSingleton<ISmartContractResultRefundProcessor, SmartContractResultRefundProcessor>();

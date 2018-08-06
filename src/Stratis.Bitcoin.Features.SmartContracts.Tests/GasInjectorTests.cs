@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.Extensions.Logging;
@@ -98,7 +99,11 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
         {
             this.loggerFactory = new ExtendedLoggerFactory();
             this.loggerFactory.AddConsoleWithFilters();
+<<<<<<< HEAD
             this.validator = new SmartContractValidator();
+=======
+            this.validator = new SmartContractValidator(new List<ISmartContractValidator>());
+>>>>>>> master
         }
 
         [Fact]
@@ -128,24 +133,42 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
             var gasMeter = new GasMeter(gasLimit);
             var internalTxExecutorFactory =
                 new InternalTransactionExecutorFactory(this.keyEncodingStrategy, this.loggerFactory, this.network);
+<<<<<<< HEAD
 
             var vm = new ReflectionVirtualMachine(this.validator, internalTxExecutorFactory, this.loggerFactory, this.network);
 
             var address = TestAddress.ToUint160(this.network);
 
             var callData = new CallData(gasLimit, address, "TestMethod", new object[] { 1 });
+=======
+            
+            var vm = new ReflectionVirtualMachine(this.validator, internalTxExecutorFactory, this.loggerFactory, this.network);
+
+            var address = TestAddress.ToUint160(this.network);
+
+            var callData = new CallData(gasLimit, address, "TestMethod", new object[] {1});
+>>>>>>> master
 
             var transactionContext = new TransactionContext(uint256.One, 0, address, address, 0);
 
             this.repository.SetCode(callData.ContractAddress, originalAssemblyBytes);
             this.repository.SetContractType(callData.ContractAddress, "Test");
 
+<<<<<<< HEAD
             var result = vm.ExecuteMethod(gasMeter,
                 this.repository,
                 callData,
                 transactionContext);
 
             Assert.Equal(GasPriceList.BaseCost + (ulong)aimGasAmount, result.GasConsumed);
+=======
+            var result = vm.ExecuteMethod(gasMeter, 
+                this.repository, 
+                callData, 
+                transactionContext);
+
+            Assert.Equal(GasPriceList.BaseCost + (ulong) aimGasAmount, result.GasConsumed);
+>>>>>>> master
         }
 
         [Fact]
@@ -163,11 +186,19 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
             var vm = new ReflectionVirtualMachine(this.validator, internalTxExecutorFactory, this.loggerFactory, this.network);
 
             var address = TestAddress.ToUint160(this.network);
+<<<<<<< HEAD
 
             var callData = new CallData(gasLimit, address, "UseAllGas");
 
             var transactionContext = new TransactionContext(uint256.One, 0, address, address, 0);
 
+=======
+
+            var callData = new CallData(gasLimit, address, "UseAllGas");
+
+            var transactionContext = new TransactionContext(uint256.One, 0, address, address, 0);
+
+>>>>>>> master
             this.repository.SetCode(callData.ContractAddress, originalAssemblyBytes);
             this.repository.SetContractType(callData.ContractAddress, "OutOfGasTest");
 
@@ -195,7 +226,11 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
             var vm = new ReflectionVirtualMachine(this.validator, internalTxExecutorFactory, this.loggerFactory, this.network);
 
             var callData = new CreateData(gasLimit, originalAssemblyBytes);
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> master
             var transactionContext = new TransactionContext(
                 txHash: uint256.One,
                 blockHeight: 0,
@@ -204,9 +239,15 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                 amount: 0
             );
 
+<<<<<<< HEAD
             var result = vm.Create(gasMeter,
                 this.repository,
                 callData,
+=======
+            var result = vm.Create(gasMeter, 
+                this.repository,
+                callData, 
+>>>>>>> master
                 transactionContext);
 
             // TODO: Un-hard-code this. 
@@ -229,7 +270,10 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
             var gasLimit = (Gas)500000;
             var gasMeter = new GasMeter(gasLimit);
             var internalTxExecutorFactory = new InternalTransactionExecutorFactory(this.keyEncodingStrategy, this.loggerFactory, this.network);
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
             var vm = new ReflectionVirtualMachine(this.validator, internalTxExecutorFactory, this.loggerFactory, this.network); 
             
             var callData = new CreateData(gasLimit, originalAssemblyBytes, new[] { "Test Owner" });
@@ -242,8 +286,13 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                 amount: 0
             );
 
+<<<<<<< HEAD
             var result = vm.Create(gasMeter,
                 this.repository,
+=======
+            var result = vm.Create(gasMeter, 
+                this.repository, 
+>>>>>>> master
                 callData, transactionContext);
 
             // Basefee: 1000
@@ -251,6 +300,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
             // Property setter: 12
             // Storage: 150
             Assert.Equal((Gas)1177, result.GasConsumed);
+<<<<<<< HEAD
         }
 
         [Fact]
@@ -280,6 +330,8 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
 
             Assert.Null(result.ExecutionException);
             Assert.True(result.GasConsumed > 0);
+=======
+>>>>>>> master
         }
     }
 }
