@@ -1,7 +1,5 @@
 ﻿using System.Linq;
-using Moq;
 using NBitcoin;
-using Stratis.Bitcoin.BlockPulling;
 using Stratis.Bitcoin.Configuration.Logging;
 using Stratis.Bitcoin.Consensus;
 using Stratis.Bitcoin.Features.Consensus.CoinViews;

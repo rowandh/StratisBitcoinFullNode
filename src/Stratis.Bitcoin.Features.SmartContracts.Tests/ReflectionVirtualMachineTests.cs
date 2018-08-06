@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
@@ -25,7 +26,6 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
         private readonly PersistentState persistentState;
         private readonly ContractStateRepositoryRoot state;
         private readonly SmartContractValidator validator;
-
         private static readonly Address TestAddress = (Address)"mipcBbFg9gMiCh81Kj8tqqdgoZub1ZJRfn";
         
         public ReflectionVirtualMachineTests()
