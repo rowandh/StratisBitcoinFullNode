@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Mono.Cecil;
@@ -84,6 +85,14 @@ namespace Stratis.SmartContracts.Executor.Reflection
         public void InjectMethodGas(string typeName, string methodName)
         {
             this.ModuleDefinition = SmartContractGasInjector.AddGasCalculationToContractMethod(this.ModuleDefinition, typeName, methodName);
+        }
+
+        /// <summary>
+        /// Sets the name of this assembly.
+        /// </summary>
+        public void SetAssemblyName(string address)
+        {
+            this.ModuleDefinition.Assembly.Name = new AssemblyNameDefinition(address, new Version(1, 0));
         }
     }
 }

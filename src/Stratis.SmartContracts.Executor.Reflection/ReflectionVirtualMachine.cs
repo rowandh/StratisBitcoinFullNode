@@ -70,11 +70,13 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             string typeToInstantiate = typeName ?? decompilation.ContractType.Name;
 
+            uint160 address = this.addressGenerator.GenerateAddress(transactionContext.TransactionHash, transactionContext.GetNonceAndIncrement());
+
             decompilation.InjectConstructorGas();
 
-            var internalTransferList = new List<TransferInfo>();
+            decompilation.SetAssemblyName(address.ToAddress(this.network));
 
-            uint160 address = this.addressGenerator.GenerateAddress(transactionContext.TransactionHash, transactionContext.GetNonceAndIncrement());
+            var internalTransferList = new List<TransferInfo>();
 
             ISmartContractState contractState = this.SetupState(internalTransferList, gasMeter, repository, transactionContext, address);
 
@@ -151,6 +153,8 @@ namespace Stratis.SmartContracts.Executor.Reflection
             SmartContractDecompilation decompilation = SmartContractDecompiler.GetModuleDefinition(contractExecutionCode);
 
             decompilation.InjectMethodGas(typeName, callData.MethodName);
+
+            decompilation.SetAssemblyName(callData.ContractAddress.ToAddress(this.network));
 
             var internalTransferList = new List<TransferInfo>();
 
