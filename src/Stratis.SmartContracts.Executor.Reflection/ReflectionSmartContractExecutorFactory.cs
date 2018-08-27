@@ -19,6 +19,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
         private readonly ICallDataSerializer serializer;
         private readonly Network network;
         private readonly InternalTransactionExecutorFactory internalTransactionExecutorFactory;
+        private readonly IAddressGenerator addressGenerator;
 
         public ReflectionSmartContractExecutorFactory(ILoggerFactory loggerFactory,
             IContractPrimitiveSerializer contractPrimitiveSerializer,
@@ -26,8 +27,9 @@ namespace Stratis.SmartContracts.Executor.Reflection
             ISmartContractResultRefundProcessor refundProcessor,
             ISmartContractResultTransferProcessor transferProcessor,
             ISmartContractVirtualMachine vm,
+            IAddressGenerator addressGenerator,
             Network network,
-            InternalTransactionExecutorFactory internalTransactionExecutorFactory1)
+            InternalTransactionExecutorFactory internalTransactionExecutorFactory)
         {
             this.loggerFactory = loggerFactory;
             this.refundProcessor = refundProcessor;
@@ -36,6 +38,8 @@ namespace Stratis.SmartContracts.Executor.Reflection
             this.contractPrimitiveSerializer = contractPrimitiveSerializer;
             this.serializer = serializer;
             this.network = network;
+            this.internalTransactionExecutorFactory = internalTransactionExecutorFactory;
+            this.addressGenerator = addressGenerator;
         }
 
         /// <summary>
@@ -49,7 +53,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             ISmartContractTransactionContext transactionContext)
         {
             return new Executor(this.loggerFactory, this.contractPrimitiveSerializer, this.serializer, 
-                    stateRepository, this.refundProcessor, this.transferProcessor, this.vm, this.network, this.internalTransactionExecutorFactory);
+                    stateRepository, this.refundProcessor, this.transferProcessor, this.vm, this.addressGenerator, this.network, this.internalTransactionExecutorFactory);
         }
     }
 }

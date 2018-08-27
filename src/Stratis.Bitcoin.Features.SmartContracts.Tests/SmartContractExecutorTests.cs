@@ -91,6 +91,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                 this.refundProcessor,
                 this.transferProcessor, 
                 this.vm,
+                this.addressGenerator,
                 this.network,
                 this.internalTxExecutorFactory);
 
@@ -124,6 +125,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                 this.refundProcessor,
                 this.transferProcessor, 
                 this.vm,
+                this.addressGenerator,
                 this.network,
                 this.internalTxExecutorFactory);
 
@@ -151,6 +153,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                 this.refundProcessor,
                 this.transferProcessor, 
                 this.vm,
+                this.addressGenerator,
                 this.network,
                 this.internalTxExecutorFactory);
 
@@ -186,6 +189,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                 this.refundProcessor,
                 this.transferProcessor, 
                 this.vm,
+                this.addressGenerator,
                 this.network,
                 this.internalTxExecutorFactory);
 
@@ -219,6 +223,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                 this.refundProcessor,
                 this.transferProcessor, 
                 this.vm,
+                this.addressGenerator,
                 this.network,
                 this.internalTxExecutorFactory);
 
@@ -257,6 +262,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                 this.refundProcessor,
                 this.transferProcessor, 
                 this.vm,
+                this.addressGenerator,
                 this.network,
                 this.internalTxExecutorFactory);
 
@@ -314,6 +320,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                 this.refundProcessor,
                 this.transferProcessor, 
                 this.vm,
+                this.addressGenerator,
                 this.network,
                 this.internalTxExecutorFactory);
 

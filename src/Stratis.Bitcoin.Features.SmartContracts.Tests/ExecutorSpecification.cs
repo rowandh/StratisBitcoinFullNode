@@ -75,6 +75,8 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
 
             var internalTransactionExecutorFactory = new InternalTransactionExecutorFactory(new BasicKeyEncodingStrategy(), loggerFactory, network);
 
+            var addressGenerator = new Mock<IAddressGenerator>();
+
             var sut = new Executor(
                 loggerFactory,
                 contractPrimitiveSerializer.Object,
@@ -83,6 +85,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                 refundProcessor.Object,
                 transferProcessor.Object,
                 vm.Object,
+                addressGenerator.Object,
                 network,
                 internalTransactionExecutorFactory);
 
