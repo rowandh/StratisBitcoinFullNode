@@ -3,6 +3,7 @@ using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NBitcoin;
+using Stratis.Bitcoin.Features.SmartContracts.Networks;
 using Stratis.SmartContracts;
 using Stratis.SmartContracts.Core;
 using Stratis.SmartContracts.Core.State;
@@ -18,6 +19,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
         [Fact]
         public void Create_Contract_Success()
         {
+            var network = new SmartContractsRegTest();
             uint160 newContractAddress = uint160.One;
             var gasConsumed = (Gas) 100;
             var code = new byte[] {0xAA, 0xBB, 0xCC};
@@ -78,8 +80,8 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                 state.Object,
                 refundProcessor.Object,
                 transferProcessor.Object,
-                vm.Object
-            );
+                vm.Object,
+                network);
 
             sut.Execute(context);
 

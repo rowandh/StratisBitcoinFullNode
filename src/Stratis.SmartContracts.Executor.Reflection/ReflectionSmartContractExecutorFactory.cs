@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using NBitcoin;
 using Stratis.SmartContracts.Core;
 using Stratis.SmartContracts.Core.State;
 using Stratis.SmartContracts.Executor.Reflection.Serialization;
@@ -16,13 +17,15 @@ namespace Stratis.SmartContracts.Executor.Reflection
         private readonly ISmartContractVirtualMachine vm;
         private readonly IContractPrimitiveSerializer contractPrimitiveSerializer;
         private readonly ICallDataSerializer serializer;
+        private readonly Network network;
 
         public ReflectionSmartContractExecutorFactory(ILoggerFactory loggerFactory,
             IContractPrimitiveSerializer contractPrimitiveSerializer,
             ICallDataSerializer serializer,
             ISmartContractResultRefundProcessor refundProcessor,
             ISmartContractResultTransferProcessor transferProcessor,
-            ISmartContractVirtualMachine vm)
+            ISmartContractVirtualMachine vm, 
+            Network network)
         {
             this.loggerFactory = loggerFactory;
             this.refundProcessor = refundProcessor;
@@ -30,6 +33,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             this.vm = vm;
             this.contractPrimitiveSerializer = contractPrimitiveSerializer;
             this.serializer = serializer;
+            this.network = network;
         }
 
         /// <summary>
@@ -43,7 +47,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             ISmartContractTransactionContext transactionContext)
         {
             return new Executor(this.loggerFactory, this.contractPrimitiveSerializer, this.serializer, 
-                    stateRepository, this.refundProcessor, this.transferProcessor, this.vm);
+                    stateRepository, this.refundProcessor, this.transferProcessor, this.vm, this.network);
         }
     }
 }
