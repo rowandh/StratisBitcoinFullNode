@@ -57,9 +57,9 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 transactionContext.Sender,
                 transactionContext.TxOutValue);
 
-            var creation = IsCreateContract(callData);
+            var creation = callData.IsCreateContract;
 
-            VmExecutionResult result = creation
+            VmExecutionResult result = callData.IsCreateContract
                 ? this.vm.Create(gasMeter, this.stateSnapshot, callData, context)
                 : this.vm.ExecuteMethod(gasMeter, this.stateSnapshot, callData, context);
 
@@ -105,11 +105,6 @@ namespace Stratis.SmartContracts.Executor.Reflection
             }
 
             return executionResult;
-        }
-
-        private static bool IsCreateContract(ContractTxData contractTxData)
-        {
-            return contractTxData.OpCodeType == (byte) ScOpcodeType.OP_CREATECONTRACT;
         }
     }
 }
