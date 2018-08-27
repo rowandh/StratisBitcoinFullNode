@@ -30,7 +30,8 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
             ISmartContractTransactionContext context = Mock.Of<ISmartContractTransactionContext>(c => 
                 c.ScriptPubKey == script &&
                 c.MempoolFee == mempoolFee &&
-                c.Sender == uint160.One);
+                c.Sender == uint160.One &&
+                c.CoinbaseAddress == uint160.Zero);
 
             var logger = new Mock<ILogger>();
             ILoggerFactory loggerFactory = Mock.Of<ILoggerFactory>
@@ -70,12 +71,14 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                 It.IsAny<IContractStateRepository>(),
                 It.IsAny<ICreateData>(),
                 It.IsAny<ITransactionContext>(),
+                It.IsAny<ISmartContractState>(),
                 It.IsAny<string>()))
                 .Returns(vmExecutionResult);
 
-            var internalTransactionExecutorFactory = new InternalTransactionExecutorFactory(new BasicKeyEncodingStrategy(), loggerFactory, network);
-
             var addressGenerator = new Mock<IAddressGenerator>();
+            addressGenerator.Setup(a => a.GenerateAddress(It.IsAny<uint256>(), It.IsAny<ulong>())).Returns(uint160.One);
+
+            var internalTransactionExecutorFactory = new InternalTransactionExecutorFactory(new BasicKeyEncodingStrategy(), loggerFactory, network, addressGenerator.Object);
 
             var sut = new Executor(
                 loggerFactory,
@@ -99,6 +102,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                     state.Object, 
                     contractTxData, 
                     It.IsAny<TransactionContext>(),
+                    It.IsAny<ISmartContractState>(),
                     It.IsAny<string>()), 
                 Times.Once);
 

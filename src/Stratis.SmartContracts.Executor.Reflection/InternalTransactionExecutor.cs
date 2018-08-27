@@ -6,6 +6,7 @@ using Stratis.SmartContracts.Core.Exceptions;
 using Stratis.SmartContracts.Core.State;
 using Stratis.SmartContracts.Core.State.AccountAbstractionLayer;
 using Stratis.SmartContracts.Executor.Reflection.ContractLogging;
+using Block = Stratis.SmartContracts.Core.Block;
 
 namespace Stratis.SmartContracts.Executor.Reflection
 {
@@ -31,6 +32,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             IContractStateRepository contractStateRepository,
             List<TransferInfo> internalTransferList,
             IKeyEncodingStrategy keyEncodingStrategy,
+            IAddressGenerator addressGenerator,
             ILoggerFactory loggerFactory,
             Network network)
         {
@@ -43,6 +45,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             this.logger = loggerFactory.CreateLogger(this.GetType());
             this.network = network;
             this.vm = vm;
+            this.addressGenerator = addressGenerator;
         }
 
         ///<inheritdoc />
@@ -79,8 +82,16 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             var createData = new CreateData(nestedGasMeter.GasLimit, contractCode, parameters);
 
+            var address =
+                this.addressGenerator.GenerateAddress(context.TransactionHash, context.GetNonceAndIncrement());
+
+            var logHolder = new ContractLogHolder(this.network);
+
+            var state = this.SetupState(smartContractState, logHolder, this.internalTransferList,
+                nestedGasMeter, track, context, address);
+
             // Do create in vm
-            VmExecutionResult result = this.vm.Create(nestedGasMeter, track, createData, context, typeof(T).Name);
+            VmExecutionResult result = this.vm.Create(nestedGasMeter, track, createData, context, state, typeof(T).Name);
 
             // Update parent gas meter.
             smartContractState.GasMeter.Spend(nestedGasMeter.GasConsumed);
@@ -99,7 +110,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             // TODO: Add internaltransfer update here
 
-            this.contractLogHolder.AddRawLogs(result.RawLogs);
+            this.contractLogHolder.AddRawLogs(logHolder.GetRawLogs());
 
             return CreateResult.Succeeded(result.NewContractAddress.ToAddress(this.network));
         }
@@ -240,6 +251,45 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 this.logger.LogTrace("(-)[INSUFFICIENT_BALANCE]:{0}={1}", nameof(balance), balance);
                 throw new InsufficientBalanceException();
             }
+        }
+
+        /// <summary>
+        /// Sets up the state object for the contract execution
+        /// </summary>
+        private ISmartContractState SetupState(
+            ISmartContractState currentState,
+            IContractLogHolder contractLogger,
+            List<TransferInfo> internalTransferList,
+            IGasMeter gasMeter,
+            IContractStateRepository repository,
+            ITransactionContext transactionContext,
+            uint160 contractAddress)
+        {
+            IPersistenceStrategy persistenceStrategy =
+                new MeteredPersistenceStrategy(repository, gasMeter, new BasicKeyEncodingStrategy());
+
+            var persistentState = new PersistentState(persistenceStrategy, ((PersistentState)currentState.PersistentState).Serializer, contractAddress);
+
+            var balanceState = new BalanceState(repository, transactionContext.Amount, internalTransferList);
+
+            var contractState = new SmartContractState(
+                new Block(
+                    transactionContext.BlockHeight,
+                    transactionContext.Coinbase.ToAddress(this.network)
+                ),
+                new Message(
+                    contractAddress.ToAddress(this.network),
+                    transactionContext.From.ToAddress(this.network),
+                    transactionContext.Amount
+                ),
+                persistentState,
+                gasMeter,
+                contractLogger,
+                this,
+                new InternalHashHelper(),
+                () => balanceState.GetBalance(contractAddress));
+
+            return contractState;
         }
     }
 }

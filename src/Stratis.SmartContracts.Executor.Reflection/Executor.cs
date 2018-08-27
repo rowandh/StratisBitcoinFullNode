@@ -4,8 +4,10 @@ using Microsoft.Extensions.Logging;
 using NBitcoin;
 using Stratis.SmartContracts.Core;
 using Stratis.SmartContracts.Core.State;
+using Stratis.SmartContracts.Core.State.AccountAbstractionLayer;
 using Stratis.SmartContracts.Executor.Reflection.ContractLogging;
 using Stratis.SmartContracts.Executor.Reflection.Serialization;
+using Block = Stratis.SmartContracts.Core.Block;
 
 namespace Stratis.SmartContracts.Executor.Reflection
 {
@@ -68,8 +70,18 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             var creation = callData.IsCreateContract;
 
+            var contractLogger = new ContractLogHolder(this.network);
+            var internalTransfers = new List<TransferInfo>();
+
+            var address = creation
+                ? this.addressGenerator.GenerateAddress(transactionContext.TransactionHash,
+                    context.GetNonceAndIncrement())
+                : callData.ContractAddress;
+
+            var state = this.SetupState(contractLogger, internalTransfers, gasMeter, this.stateSnapshot, context, address);
+
             VmExecutionResult result = callData.IsCreateContract
-                ? this.vm.Create(gasMeter, this.stateSnapshot, callData, context)
+                ? this.vm.Create(gasMeter, this.stateSnapshot, callData, context, state)
                 : this.vm.ExecuteMethod(gasMeter, this.stateSnapshot, callData, context);
 
             var revert = result.ExecutionException != null;
@@ -97,7 +109,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 InternalTransaction = internalTransaction,
                 Fee = fee,
                 Refunds = refundTxOuts,
-                Logs = result.RawLogs.ToLogs(this.contractPrimitiveSerializer)
+                Logs = creation ? contractLogger.GetRawLogs().ToLogs(this.contractPrimitiveSerializer) : result.RawLogs.ToLogs(this.contractPrimitiveSerializer)
             };
 
             if (revert)
@@ -114,6 +126,46 @@ namespace Stratis.SmartContracts.Executor.Reflection
             }
 
             return executionResult;
+        }
+
+        /// <summary>
+        /// Sets up the state object for the contract execution
+        /// </summary>
+        private ISmartContractState SetupState(
+            IContractLogHolder contractLogger,
+            List<TransferInfo> internalTransferList,
+            IGasMeter gasMeter,
+            IContractStateRepository repository,
+            ITransactionContext transactionContext,
+            uint160 contractAddress)
+        {
+            IPersistenceStrategy persistenceStrategy =
+                new MeteredPersistenceStrategy(repository, gasMeter, new BasicKeyEncodingStrategy());
+
+            var persistentState = new PersistentState(persistenceStrategy, this.contractPrimitiveSerializer, contractAddress);
+
+            IInternalTransactionExecutor internalTransactionExecutor = this.internalTransactionExecutorFactory.Create(this.vm, contractLogger, repository, internalTransferList, transactionContext);
+
+            var balanceState = new BalanceState(repository, transactionContext.Amount, internalTransferList);
+
+            var contractState = new SmartContractState(
+                new Block(
+                    transactionContext.BlockHeight,
+                    transactionContext.Coinbase.ToAddress(this.network)
+                ),
+                new Message(
+                    contractAddress.ToAddress(this.network),
+                    transactionContext.From.ToAddress(this.network),
+                    transactionContext.Amount
+                ),
+                persistentState,
+                gasMeter,
+                contractLogger,
+                internalTransactionExecutor,
+                new InternalHashHelper(),
+                () => balanceState.GetBalance(contractAddress));
+
+            return contractState;
         }
     }
 }

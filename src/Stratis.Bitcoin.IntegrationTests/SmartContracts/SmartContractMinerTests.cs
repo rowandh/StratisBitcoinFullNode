@@ -209,8 +209,8 @@ namespace Stratis.Bitcoin.IntegrationTests.SmartContracts
                 this.transferProcessor = new SmartContractResultTransferProcessor(loggerFactory, this.network);
 
                 this.serializer = CallDataSerializer.Default;
-                this.internalTxExecutorFactory = new InternalTransactionExecutorFactory(this.keyEncodingStrategy, loggerFactory, this.network);
                 this.AddressGenerator = new AddressGenerator();
+                this.internalTxExecutorFactory = new InternalTransactionExecutorFactory(this.keyEncodingStrategy, loggerFactory, this.network, this.AddressGenerator);
                 this.assemblyLoader = new ContractAssemblyLoader();
                 this.moduleDefinitionReader = new ContractModuleDefinitionReader();
                 this.contractPrimitiveSerializer = new ContractPrimitiveSerializer(this.network);

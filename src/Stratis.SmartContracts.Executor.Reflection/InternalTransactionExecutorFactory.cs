@@ -15,13 +15,15 @@ namespace Stratis.SmartContracts.Executor.Reflection
         private readonly IKeyEncodingStrategy keyEncodingStrategy;
         private readonly ILoggerFactory loggerFactory;
         private readonly Network network;
+        private readonly IAddressGenerator addressGenerator;
 
         public InternalTransactionExecutorFactory(IKeyEncodingStrategy keyEncodingStrategy,
-            ILoggerFactory loggerFactory, Network network)
+            ILoggerFactory loggerFactory, Network network, IAddressGenerator addressGenerator)
         {
             this.keyEncodingStrategy = keyEncodingStrategy;
             this.loggerFactory = loggerFactory;
             this.network = network;
+            this.addressGenerator = addressGenerator;
         }
 
         public IInternalTransactionExecutor Create(ISmartContractVirtualMachine vm,
@@ -37,6 +39,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 stateRepository,
                 internalTransferList,
                 this.keyEncodingStrategy,
+                this.addressGenerator,
                 this.loggerFactory,
                 this.network
             );
