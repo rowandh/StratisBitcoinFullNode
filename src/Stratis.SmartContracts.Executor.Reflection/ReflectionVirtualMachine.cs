@@ -62,7 +62,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 if (!validation.IsValid)
                 {
                     this.logger.LogTrace("(-)[CONTRACT_VALIDATION_FAILED]");
-                    return VmExecutionResult.Error(gasMeter.GasConsumed, new SmartContractValidationException(validation.Errors));
+                    return VmExecutionResult.Error(new SmartContractValidationException(validation.Errors));
                 }
 
                 typeToInstantiate = typeName ?? moduleDefinition.ContractType.Name;
@@ -87,7 +87,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
                 this.logger.LogTrace("(-)[LOAD_CONTRACT_FAILED]:{0}={1}", nameof(gasMeter.GasConsumed), gasMeter.GasConsumed);
 
-                return VmExecutionResult.Error(gasMeter.GasConsumed, exception);
+                return VmExecutionResult.Error(exception);
             }
 
             IContract contract = contractLoadResult.Value;
@@ -103,7 +103,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             if (!invocationResult.IsSuccess)
             {
                 this.logger.LogTrace("[CREATE_CONTRACT_INSTANTIATION_FAILED]");
-                return VmExecutionResult.Error(gasMeter.GasConsumed, new Exception("Constructor invocation failed!"));
+                return VmExecutionResult.Error(new Exception("Constructor invocation failed!"));
             }
 
             this.logger.LogTrace("[CREATE_CONTRACT_INSTANTIATION_SUCCEEDED]");
@@ -113,7 +113,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             repository.SetCode(contract.Address, createData.ContractExecutionCode);
             repository.SetContractType(contract.Address, contract.Type.Name);
 
-            return VmExecutionResult.Success(gasMeter.GasConsumed, invocationResult.Return);
+            return VmExecutionResult.Success(invocationResult.Return);
         }
 
         /// <summary>
@@ -129,7 +129,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             if (callData.MethodName == null)
             {
                 this.logger.LogTrace("(-)[CALLCONTRACT_METHODNAME_NOT_GIVEN]");
-                return VmExecutionResult.Error(gasMeter.GasConsumed, null);
+                return VmExecutionResult.Error(null);
             }
 
             byte[] contractExecutionCode = repository.GetCode(callData.ContractAddress);
@@ -138,7 +138,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             if (contractExecutionCode == null)
             {
-                return VmExecutionResult.Error(gasMeter.GasConsumed, new SmartContractDoesNotExistException(callData.MethodName));
+                return VmExecutionResult.Error(new SmartContractDoesNotExistException(callData.MethodName));
             }
 
             // TODO consolidate this with CallData.
@@ -168,7 +168,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
                 this.logger.LogTrace("(-)[LOAD_CONTRACT_FAILED]:{0}={1}", nameof(gasMeter.GasConsumed), gasMeter.GasConsumed);
 
-                return VmExecutionResult.Error(gasMeter.GasConsumed, exception);
+                return VmExecutionResult.Error(exception);
             }
 
             IContract contract = contractLoadResult.Value;
@@ -180,14 +180,14 @@ namespace Stratis.SmartContracts.Executor.Reflection
             if (!invocationResult.IsSuccess)
             {
                 this.logger.LogTrace("(-)[CALLCONTRACT_INSTANTIATION_FAILED]:{0}={1}", nameof(gasMeter.GasConsumed), gasMeter.GasConsumed);
-                return VmExecutionResult.Error(gasMeter.GasConsumed, new Exception("Method invocation failed!"));
+                return VmExecutionResult.Error(new Exception("Method invocation failed!"));
             }
 
             this.logger.LogTrace("[CALL_CONTRACT_INSTANTIATION_SUCCEEDED]");
 
             this.logger.LogTrace("(-):{0}={1}", nameof(gasMeter.GasConsumed), gasMeter.GasConsumed);
 
-            return VmExecutionResult.Success(gasMeter.GasConsumed, invocationResult.Return);
+            return VmExecutionResult.Success(invocationResult.Return);
         }
 
         /// <summary>

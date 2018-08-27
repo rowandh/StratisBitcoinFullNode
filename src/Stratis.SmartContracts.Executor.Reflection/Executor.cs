@@ -97,14 +97,14 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 callData,
                 transactionContext.MempoolFee,
                 transactionContext.Sender,
-                result.GasConsumed,
+                gasMeter.GasConsumed,
                 result.ExecutionException);
 
             var executionResult = new SmartContractExecutionResult
             {
                 NewContractAddress = !revert && creation ? address : null,
                 Exception = result.ExecutionException,
-                GasConsumed = result.GasConsumed,
+                GasConsumed = gasMeter.GasConsumed,
                 Return = result.Result,
                 InternalTransaction = internalTransaction,
                 Fee = fee,

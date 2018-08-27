@@ -4,29 +4,25 @@ namespace Stratis.SmartContracts.Executor.Reflection
 {
     public class VmExecutionResult
     {
-        public Gas GasConsumed { get; }
-
         public object Result { get; }
 
         public Exception ExecutionException { get; }
 
-        private VmExecutionResult(Gas gasConsumed,
-            object result,
+        private VmExecutionResult(object result,
             Exception e = null)
         {
-            this.GasConsumed = gasConsumed;
             this.Result = result;
             this.ExecutionException = e;
         }
 
-        public static VmExecutionResult Success(Gas gasConsumed, object result)
+        public static VmExecutionResult Success(object result)
         {
-            return new VmExecutionResult(gasConsumed, result);
+            return new VmExecutionResult(result);
         }
 
-        public static VmExecutionResult Error(Gas gasConsumed, Exception e)
+        public static VmExecutionResult Error(Exception e)
         {
-            return new VmExecutionResult(gasConsumed, null, e);
+            return new VmExecutionResult(null, e);
         }
     }
 }

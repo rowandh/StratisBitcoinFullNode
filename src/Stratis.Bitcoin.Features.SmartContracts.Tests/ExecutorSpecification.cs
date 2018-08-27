@@ -45,8 +45,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
             var contractPrimitiveSerializer = new Mock<IContractPrimitiveSerializer>();
 
             var vmExecutionResult =
-                VmExecutionResult.Success(gasConsumed,
-                    null);
+                VmExecutionResult.Success(null);
 
             var state = new Mock<IContractStateRepository>();
             var transferProcessor = new Mock<ISmartContractResultTransferProcessor>();
@@ -58,12 +57,12 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                     contractTxData,
                     mempoolFee,
                     context.Sender,
-                    vmExecutionResult.GasConsumed,
+                    It.IsAny<Gas>(),
                     vmExecutionResult.ExecutionException))
                 .Returns(refundResult);
 
             var vm = new Mock<ISmartContractVirtualMachine>();
-            vm.Setup(v => v.Create(It.Is<IGasMeter>(x => x.GasConsumed == GasPriceList.BaseCost),
+            vm.Setup(v => v.Create(It.IsAny<IGasMeter>(),
                 It.IsAny<IContractStateRepository>(),
                 It.IsAny<ICreateData>(),
                 It.IsAny<ISmartContractState>(),
@@ -114,7 +113,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                         contractTxData,
                         mempoolFee,
                         context.Sender,
-                        vmExecutionResult.GasConsumed,
+                        It.IsAny<Gas>(),
                         vmExecutionResult.ExecutionException),
                 Times.Once);
 
