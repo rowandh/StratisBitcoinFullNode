@@ -128,7 +128,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             repository.SetCode(contract.Address, createData.ContractExecutionCode);
             repository.SetContractType(contract.Address, contract.Type.Name);
 
-            return VmExecutionResult.CreationSuccess(contract.Address, null, gasMeter.GasConsumed, invocationResult.Return, null);
+            return VmExecutionResult.Success(gasMeter.GasConsumed, invocationResult.Return);
         }
 
         /// <summary>
@@ -203,7 +203,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             this.logger.LogTrace("(-):{0}={1}", nameof(gasMeter.GasConsumed), gasMeter.GasConsumed);
 
-            return VmExecutionResult.Success(null, gasMeter.GasConsumed, invocationResult.Return, null);
+            return VmExecutionResult.Success(gasMeter.GasConsumed, invocationResult.Return);
         }
 
         /// <summary>

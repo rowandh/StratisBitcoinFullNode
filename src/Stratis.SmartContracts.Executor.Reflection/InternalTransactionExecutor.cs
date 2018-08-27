@@ -112,7 +112,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             this.contractLogHolder.AddRawLogs(logHolder.GetRawLogs());
 
-            return CreateResult.Succeeded(result.NewContractAddress.ToAddress(this.network));
+            return CreateResult.Succeeded(address.ToAddress(this.network));
         }
 
         ///<inheritdoc />

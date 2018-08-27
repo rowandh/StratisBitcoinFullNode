@@ -45,11 +45,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
             var contractPrimitiveSerializer = new Mock<IContractPrimitiveSerializer>();
 
             var vmExecutionResult =
-                VmExecutionResult.CreationSuccess(
-                    newContractAddress, 
-                    new List<TransferInfo>(),
-                    gasConsumed,
-                    null,
+                VmExecutionResult.Success(gasConsumed,
                     null);
 
             var state = new Mock<IContractStateRepository>();
@@ -76,7 +72,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                 .Returns(vmExecutionResult);
 
             var addressGenerator = new Mock<IAddressGenerator>();
-            addressGenerator.Setup(a => a.GenerateAddress(It.IsAny<uint256>(), It.IsAny<ulong>())).Returns(uint160.One);
+            addressGenerator.Setup(a => a.GenerateAddress(It.IsAny<uint256>(), It.IsAny<ulong>())).Returns(newContractAddress);
 
             var internalTransactionExecutorFactory = new InternalTransactionExecutorFactory(new BasicKeyEncodingStrategy(), loggerFactory, network, addressGenerator.Object);
 
@@ -109,9 +105,9 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
             transferProcessor.Verify(t => t
                 .Process(
                     state.Object, 
-                    vmExecutionResult.NewContractAddress, 
+                    newContractAddress, 
                     It.IsAny<ISmartContractTransactionContext>(),
-                    vmExecutionResult.InternalTransfers,
+                    It.IsAny<List<TransferInfo>>(),
                     false), 
                 Times.Once);
 

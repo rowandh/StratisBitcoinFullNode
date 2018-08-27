@@ -88,7 +88,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             Transaction internalTransaction = this.transferProcessor.Process(
                 this.stateSnapshot,
-                creation ? result.NewContractAddress : callData.ContractAddress,
+                address,
                 transactionContext,
                 internalTransfers,
                 revert);
@@ -102,7 +102,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             var executionResult = new SmartContractExecutionResult
             {
-                NewContractAddress = !revert && creation ? result.NewContractAddress : null,
+                NewContractAddress = !revert && creation ? address : null,
                 Exception = result.ExecutionException,
                 GasConsumed = result.GasConsumed,
                 Return = result.Result,
