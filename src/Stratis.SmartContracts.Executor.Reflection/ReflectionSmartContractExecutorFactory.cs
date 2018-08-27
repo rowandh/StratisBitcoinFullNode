@@ -18,14 +18,16 @@ namespace Stratis.SmartContracts.Executor.Reflection
         private readonly IContractPrimitiveSerializer contractPrimitiveSerializer;
         private readonly ICallDataSerializer serializer;
         private readonly Network network;
+        private readonly InternalTransactionExecutorFactory internalTransactionExecutorFactory;
 
         public ReflectionSmartContractExecutorFactory(ILoggerFactory loggerFactory,
             IContractPrimitiveSerializer contractPrimitiveSerializer,
             ICallDataSerializer serializer,
             ISmartContractResultRefundProcessor refundProcessor,
             ISmartContractResultTransferProcessor transferProcessor,
-            ISmartContractVirtualMachine vm, 
-            Network network)
+            ISmartContractVirtualMachine vm,
+            Network network,
+            InternalTransactionExecutorFactory internalTransactionExecutorFactory1)
         {
             this.loggerFactory = loggerFactory;
             this.refundProcessor = refundProcessor;
@@ -47,7 +49,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             ISmartContractTransactionContext transactionContext)
         {
             return new Executor(this.loggerFactory, this.contractPrimitiveSerializer, this.serializer, 
-                    stateRepository, this.refundProcessor, this.transferProcessor, this.vm, this.network);
+                    stateRepository, this.refundProcessor, this.transferProcessor, this.vm, this.network, this.internalTransactionExecutorFactory);
         }
     }
 }

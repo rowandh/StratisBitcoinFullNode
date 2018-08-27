@@ -73,6 +73,8 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                 It.IsAny<string>()))
                 .Returns(vmExecutionResult);
 
+            var internalTransactionExecutorFactory = new InternalTransactionExecutorFactory(new BasicKeyEncodingStrategy(), loggerFactory, network);
+
             var sut = new Executor(
                 loggerFactory,
                 contractPrimitiveSerializer.Object,
@@ -81,7 +83,8 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                 refundProcessor.Object,
                 transferProcessor.Object,
                 vm.Object,
-                network);
+                network,
+                internalTransactionExecutorFactory);
 
             sut.Execute(context);
 
