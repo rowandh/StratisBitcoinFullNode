@@ -81,8 +81,8 @@ namespace Stratis.SmartContracts.Executor.Reflection
             var state = this.SetupState(contractLogger, internalTransfers, gasMeter, this.stateSnapshot, context, address);
 
             VmExecutionResult result = callData.IsCreateContract
-                ? this.vm.Create(gasMeter, this.stateSnapshot, callData, context, state)
-                : this.vm.ExecuteMethod(gasMeter, this.stateSnapshot, callData, context, state);
+                ? this.vm.Create(gasMeter, this.stateSnapshot, callData, state)
+                : this.vm.ExecuteMethod(gasMeter, this.stateSnapshot, callData, state);
 
             var revert = result.ExecutionException != null;
 

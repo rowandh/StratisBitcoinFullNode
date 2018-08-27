@@ -66,7 +66,6 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
             vm.Setup(v => v.Create(It.Is<IGasMeter>(x => x.GasConsumed == GasPriceList.BaseCost),
                 It.IsAny<IContractStateRepository>(),
                 It.IsAny<ICreateData>(),
-                It.IsAny<ITransactionContext>(),
                 It.IsAny<ISmartContractState>(),
                 It.IsAny<string>()))
                 .Returns(vmExecutionResult);
@@ -96,8 +95,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                 v.Create(
                     It.IsAny<IGasMeter>(), 
                     state.Object, 
-                    contractTxData, 
-                    It.IsAny<TransactionContext>(),
+                    contractTxData,
                     It.IsAny<ISmartContractState>(),
                     It.IsAny<string>()), 
                 Times.Once);

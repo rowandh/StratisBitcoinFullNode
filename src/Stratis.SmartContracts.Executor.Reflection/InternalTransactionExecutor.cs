@@ -91,7 +91,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 nestedGasMeter, track, context, address);
 
             // Do create in vm
-            VmExecutionResult result = this.vm.Create(nestedGasMeter, track, createData, context, state, typeof(T).Name);
+            VmExecutionResult result = this.vm.Create(nestedGasMeter, track, createData, state, typeof(T).Name);
 
             // Update parent gas meter.
             smartContractState.GasMeter.Spend(nestedGasMeter.GasConsumed);
@@ -216,7 +216,6 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 nestedGasMeter, 
                 track, 
                 callData,
-                context,
                 state);
 
             // Update parent gas meter.

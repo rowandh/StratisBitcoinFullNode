@@ -1,19 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
 using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
 using Stratis.SmartContracts.Core;
 using Stratis.SmartContracts.Core.State;
-using Stratis.SmartContracts.Core.State.AccountAbstractionLayer;
 using Stratis.SmartContracts.Core.Validation;
 using Stratis.SmartContracts.Executor.Reflection.Compilation;
-using Stratis.SmartContracts.Executor.Reflection.ContractLogging;
 using Stratis.SmartContracts.Executor.Reflection.Exceptions;
 using Stratis.SmartContracts.Executor.Reflection.Loader;
-using Stratis.SmartContracts.Executor.Reflection.Serialization;
-using Block = Stratis.SmartContracts.Core.Block;
 
 namespace Stratis.SmartContracts.Executor.Reflection
 {
@@ -22,33 +17,24 @@ namespace Stratis.SmartContracts.Executor.Reflection
     /// </summary>
     public class ReflectionVirtualMachine : ISmartContractVirtualMachine
     {
-        private readonly InternalTransactionExecutorFactory internalTransactionExecutorFactory;
         private readonly ILogger logger;
         private readonly Network network;
         private readonly ISmartContractValidator validator;
-        private readonly IAddressGenerator addressGenerator;
         private readonly ILoader assemblyLoader;
         private readonly IContractModuleDefinitionReader moduleDefinitionReader;
-        private readonly IContractPrimitiveSerializer contractPrimitiveSerializer;
         public static int VmVersion = 1;
 
         public ReflectionVirtualMachine(ISmartContractValidator validator,
-            InternalTransactionExecutorFactory internalTransactionExecutorFactory,
             ILoggerFactory loggerFactory,
             Network network,
-            IAddressGenerator addressGenerator,
             ILoader assemblyLoader,
-            IContractModuleDefinitionReader moduleDefinitionReader,
-            IContractPrimitiveSerializer contractPrimitiveSerializer)
+            IContractModuleDefinitionReader moduleDefinitionReader)
         {
             this.validator = validator;
-            this.internalTransactionExecutorFactory = internalTransactionExecutorFactory;
             this.logger = loggerFactory.CreateLogger(this.GetType());
             this.network = network;
-            this.addressGenerator = addressGenerator;
             this.assemblyLoader = assemblyLoader;
             this.moduleDefinitionReader = moduleDefinitionReader;
-            this.contractPrimitiveSerializer = contractPrimitiveSerializer;
         }
 
         /// <summary>
@@ -57,7 +43,6 @@ namespace Stratis.SmartContracts.Executor.Reflection
         public VmExecutionResult Create(IGasMeter gasMeter,
             IContractStateRepository repository,
             ICreateData createData,
-            ITransactionContext transactionContext,
             ISmartContractState contractState,
             string typeName = null)
         {
@@ -137,7 +122,6 @@ namespace Stratis.SmartContracts.Executor.Reflection
         public VmExecutionResult ExecuteMethod(IGasMeter gasMeter,
             IContractStateRepository repository,
             ICallData callData,
-            ITransactionContext transactionContext,
             ISmartContractState contractState)
         {
             this.logger.LogTrace("(){0}:{1}", nameof(callData.MethodName), callData.MethodName);
@@ -204,45 +188,6 @@ namespace Stratis.SmartContracts.Executor.Reflection
             this.logger.LogTrace("(-):{0}={1}", nameof(gasMeter.GasConsumed), gasMeter.GasConsumed);
 
             return VmExecutionResult.Success(gasMeter.GasConsumed, invocationResult.Return);
-        }
-
-        /// <summary>
-        /// Sets up the state object for the contract execution
-        /// </summary>
-        private ISmartContractState SetupState(
-            IContractLogHolder contractLogger,
-            List<TransferInfo> internalTransferList,
-            IGasMeter gasMeter,
-            IContractStateRepository repository,
-            ITransactionContext transactionContext,
-            uint160 contractAddress)
-        {
-            IPersistenceStrategy persistenceStrategy =
-                new MeteredPersistenceStrategy(repository, gasMeter, new BasicKeyEncodingStrategy());
-
-            var persistentState = new PersistentState(persistenceStrategy, this.contractPrimitiveSerializer, contractAddress);
-
-            IInternalTransactionExecutor internalTransactionExecutor = this.internalTransactionExecutorFactory.Create(this, contractLogger, repository, internalTransferList, transactionContext);
-
-            var balanceState = new BalanceState(repository, transactionContext.Amount, internalTransferList);
-
-            var contractState = new SmartContractState(
-                new Block(
-                    transactionContext.BlockHeight,
-                    transactionContext.Coinbase.ToAddress(this.network)
-                ),
-                new Message(
-                    contractAddress.ToAddress(this.network),
-                    transactionContext.From.ToAddress(this.network),
-                    transactionContext.Amount
-                ),
-                persistentState,
-                gasMeter,
-                contractLogger,
-                internalTransactionExecutor,
-                new InternalHashHelper(),
-                () => balanceState.GetBalance(contractAddress));
-            return contractState;
         }
 
         /// <summary>
