@@ -207,11 +207,17 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 amountToTransfer,
                 this.transactionContext.Nonce);
 
+            var logHolder = new ContractLogHolder(this.network);
+
+            var state = this.SetupState(smartContractState, logHolder, this.internalTransferList,
+                nestedGasMeter, track, context, callData.ContractAddress);
+
             VmExecutionResult result = this.vm.ExecuteMethod(
                 nestedGasMeter, 
                 track, 
                 callData,
-                context);
+                context,
+                state);
 
             // Update parent gas meter.
             smartContractState.GasMeter.Spend(nestedGasMeter.GasConsumed);
@@ -233,7 +239,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 Value = amountToTransfer
             });
 
-            this.contractLogHolder.AddRawLogs(result.RawLogs);
+            this.contractLogHolder.AddRawLogs(logHolder.GetRawLogs());
 
             this.logger.LogTrace("(-)");
 
@@ -259,10 +265,10 @@ namespace Stratis.SmartContracts.Executor.Reflection
         private ISmartContractState SetupState(
             ISmartContractState currentState,
             IContractLogHolder contractLogger,
-            List<TransferInfo> internalTransferList,
+            List<TransferInfo> itl,
             IGasMeter gasMeter,
             IContractStateRepository repository,
-            ITransactionContext transactionContext,
+            ITransactionContext txContext,
             uint160 contractAddress)
         {
             IPersistenceStrategy persistenceStrategy =
@@ -270,17 +276,17 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             var persistentState = new PersistentState(persistenceStrategy, ((PersistentState)currentState.PersistentState).Serializer, contractAddress);
 
-            var balanceState = new BalanceState(repository, transactionContext.Amount, internalTransferList);
+            var balanceState = new BalanceState(repository, txContext.Amount, itl);
 
             var contractState = new SmartContractState(
                 new Block(
-                    transactionContext.BlockHeight,
-                    transactionContext.Coinbase.ToAddress(this.network)
+                    txContext.BlockHeight,
+                    txContext.Coinbase.ToAddress(this.network)
                 ),
                 new Message(
                     contractAddress.ToAddress(this.network),
-                    transactionContext.From.ToAddress(this.network),
-                    transactionContext.Amount
+                    txContext.From.ToAddress(this.network),
+                    txContext.Amount
                 ),
                 persistentState,
                 gasMeter,

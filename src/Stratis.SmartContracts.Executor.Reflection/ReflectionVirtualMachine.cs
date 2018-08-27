@@ -87,8 +87,6 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 code = moduleDefinition.ToByteCode();
             }
 
-            var internalTransferList = new List<TransferInfo>();
-
             Result<IContract> contractLoadResult = this.Load(
                 code,
                 typeToInstantiate,
@@ -130,17 +128,17 @@ namespace Stratis.SmartContracts.Executor.Reflection
             repository.SetCode(contract.Address, createData.ContractExecutionCode);
             repository.SetContractType(contract.Address, contract.Type.Name);
 
-            return VmExecutionResult.CreationSuccess(contract.Address, internalTransferList, gasMeter.GasConsumed, invocationResult.Return, null);
+            return VmExecutionResult.CreationSuccess(contract.Address, null, gasMeter.GasConsumed, invocationResult.Return, null);
         }
 
         /// <summary>
         /// Invokes a method on an existing smart contract
         /// </summary>
-        public VmExecutionResult ExecuteMethod(
-            IGasMeter gasMeter,
+        public VmExecutionResult ExecuteMethod(IGasMeter gasMeter,
             IContractStateRepository repository,
             ICallData callData,
-            ITransactionContext transactionContext)
+            ITransactionContext transactionContext,
+            ISmartContractState contractState)
         {
             this.logger.LogTrace("(){0}:{1}", nameof(callData.MethodName), callData.MethodName);
 
@@ -170,12 +168,6 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
                 code = moduleDefinition.ToByteCode();
             }
-
-            var internalTransferList = new List<TransferInfo>();
-
-            var contractLogger = new ContractLogHolder(this.network);
-
-            ISmartContractState contractState = this.SetupState(contractLogger, internalTransferList, gasMeter, repository, transactionContext, callData.ContractAddress);
 
             Result<IContract> contractLoadResult = this.Load(
                 code,
@@ -211,7 +203,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             this.logger.LogTrace("(-):{0}={1}", nameof(gasMeter.GasConsumed), gasMeter.GasConsumed);
 
-            return VmExecutionResult.Success(internalTransferList, gasMeter.GasConsumed, invocationResult.Return, contractLogger.GetRawLogs());
+            return VmExecutionResult.Success(null, gasMeter.GasConsumed, invocationResult.Return, null);
         }
 
         /// <summary>

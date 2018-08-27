@@ -82,7 +82,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             VmExecutionResult result = callData.IsCreateContract
                 ? this.vm.Create(gasMeter, this.stateSnapshot, callData, context, state)
-                : this.vm.ExecuteMethod(gasMeter, this.stateSnapshot, callData, context);
+                : this.vm.ExecuteMethod(gasMeter, this.stateSnapshot, callData, context, state);
 
             var revert = result.ExecutionException != null;
 
@@ -90,7 +90,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 this.stateSnapshot,
                 creation ? result.NewContractAddress : callData.ContractAddress,
                 transactionContext,
-                result.InternalTransfers,
+                internalTransfers,
                 revert);
 
             (Money fee, List<TxOut> refundTxOuts) = this.refundProcessor.Process(
@@ -109,7 +109,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 InternalTransaction = internalTransaction,
                 Fee = fee,
                 Refunds = refundTxOuts,
-                Logs = creation ? contractLogger.GetRawLogs().ToLogs(this.contractPrimitiveSerializer) : result.RawLogs.ToLogs(this.contractPrimitiveSerializer)
+                Logs = contractLogger.GetRawLogs().ToLogs(this.contractPrimitiveSerializer)
             };
 
             if (revert)
