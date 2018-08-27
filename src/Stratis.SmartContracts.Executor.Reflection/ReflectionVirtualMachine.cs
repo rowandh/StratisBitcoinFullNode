@@ -40,8 +40,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
         /// <summary>
         /// Creates a new instance of a smart contract by invoking the contract's constructor
         /// </summary>
-        public VmExecutionResult Create(IGasMeter gasMeter,
-            IContractStateRepository repository,
+        public VmExecutionResult Create(IContractStateRepository repository,
             ICreateData createData,
             ISmartContractState contractState,
             string typeName = null)
@@ -85,7 +84,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
                 LogException(exception);
 
-                this.logger.LogTrace("(-)[LOAD_CONTRACT_FAILED]:{0}={1}", nameof(gasMeter.GasConsumed), gasMeter.GasConsumed);
+                this.logger.LogTrace("(-)[LOAD_CONTRACT_FAILED]");
 
                 return VmExecutionResult.Error(exception);
             }
@@ -108,7 +107,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             this.logger.LogTrace("[CREATE_CONTRACT_INSTANTIATION_SUCCEEDED]");
             
-            this.logger.LogTrace("(-):{0}={1}, {2}={3}", nameof(contract.Address), contract.Address, nameof(gasMeter.GasConsumed), gasMeter.GasConsumed);
+            this.logger.LogTrace("(-):{0}={1}", nameof(contract.Address), contract.Address);
 
             repository.SetCode(contract.Address, createData.ContractExecutionCode);
             repository.SetContractType(contract.Address, contract.Type.Name);
@@ -119,8 +118,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
         /// <summary>
         /// Invokes a method on an existing smart contract
         /// </summary>
-        public VmExecutionResult ExecuteMethod(IGasMeter gasMeter,
-            IContractStateRepository repository,
+        public VmExecutionResult ExecuteMethod(IContractStateRepository repository,
             ICallData callData,
             ISmartContractState contractState)
         {
@@ -166,7 +164,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
                 LogException(exception);
 
-                this.logger.LogTrace("(-)[LOAD_CONTRACT_FAILED]:{0}={1}", nameof(gasMeter.GasConsumed), gasMeter.GasConsumed);
+                this.logger.LogTrace("(-)[LOAD_CONTRACT_FAILED]");
 
                 return VmExecutionResult.Error(exception);
             }
@@ -179,13 +177,13 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             if (!invocationResult.IsSuccess)
             {
-                this.logger.LogTrace("(-)[CALLCONTRACT_INSTANTIATION_FAILED]:{0}={1}", nameof(gasMeter.GasConsumed), gasMeter.GasConsumed);
+                this.logger.LogTrace("(-)[CALLCONTRACT_INSTANTIATION_FAILED]");
                 return VmExecutionResult.Error(new Exception("Method invocation failed!"));
             }
 
             this.logger.LogTrace("[CALL_CONTRACT_INSTANTIATION_SUCCEEDED]");
 
-            this.logger.LogTrace("(-):{0}={1}", nameof(gasMeter.GasConsumed), gasMeter.GasConsumed);
+            this.logger.LogTrace("(-)");
 
             return VmExecutionResult.Success(invocationResult.Return);
         }
