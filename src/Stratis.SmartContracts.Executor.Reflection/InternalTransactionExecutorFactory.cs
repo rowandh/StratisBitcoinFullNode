@@ -41,7 +41,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 this.keyEncodingStrategy,
                 this.addressGenerator,
                 this.loggerFactory,
-                this.network
+                this.network, null
             );
         }
     }

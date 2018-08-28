@@ -25,6 +25,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
         private readonly Network network;
         private readonly ISmartContractVirtualMachine vm;
         private readonly ITransactionContext transactionContext;
+        private readonly IState baseState;
 
         public InternalTransactionExecutor(ITransactionContext transactionContext,
             ISmartContractVirtualMachine vm,
@@ -34,7 +35,8 @@ namespace Stratis.SmartContracts.Executor.Reflection
             IKeyEncodingStrategy keyEncodingStrategy,
             IAddressGenerator addressGenerator,
             ILoggerFactory loggerFactory,
-            Network network)
+            Network network,
+            IState state)
         {
             this.transactionContext = transactionContext;
             this.contractLogHolder = contractLogHolder;
@@ -46,6 +48,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             this.network = network;
             this.vm = vm;
             this.addressGenerator = addressGenerator;
+            this.baseState = state;
         }
 
         ///<inheritdoc />
@@ -62,55 +65,32 @@ namespace Stratis.SmartContracts.Executor.Reflection
             if (smartContractState.GasMeter.GasAvailable < gasBudget)
                 throw new InsufficientGasException();
 
-            var nestedGasMeter = new GasMeter((Gas)gasBudget);
-
             // Check balance.
             EnsureContractHasEnoughBalance(smartContractState, amountToTransfer);
 
             // Build objects for VM
             byte[] contractCode = this.contractStateRepository.GetCode(smartContractState.Message.ContractAddress.ToUint160(this.network)); // TODO: Fix this when calling from constructor.
 
-            var context = new TransactionContext(
-                this.transactionContext.TransactionHash,
-                this.transactionContext.BlockHeight,
-                this.transactionContext.Coinbase,
-                smartContractState.Message.ContractAddress.ToUint160(this.network),
-                amountToTransfer,
-                this.transactionContext.GetNonceAndIncrement());
+            var address = this.addressGenerator.GenerateAddress(this.baseState.TransactionHash, this.baseState.GetNonceAndIncrement());
 
-            IContractStateRepository track = this.contractStateRepository.StartTracking();
+            var message = new Message();
 
-            var address =
-                this.addressGenerator.GenerateAddress(context.TransactionHash, context.GetNonceAndIncrement());
+            message.To = address;
+            message.From = smartContractState.Message.ContractAddress.ToUint160(this.network);
+            message.Amount = amountToTransfer;
+            message.Code = contractCode;
+            message.GasLimit = (Gas) gasBudget;
+            message.Method = new MethodCall(null, parameters);
+            message.IsCreation = true;
 
-            var logHolder = new ContractLogHolder(this.network);
+            var nestedState = this.baseState.Nest(amountToTransfer);
 
-            var state = this.SetupState(smartContractState, logHolder, this.internalTransferList,
-                nestedGasMeter, track, context, address);
+            var stateTransition = new StateTransition(nestedState, this.vm, this.network, message);
 
-            var methodCall = new MethodCall(null, parameters);
-
-            // Do create in vm
-            VmExecutionResult result = this.vm.Create(track, methodCall, state, contractCode, typeof(T).Name);
+            (var result, var nestedGasMeter) = stateTransition.Apply();
 
             // Update parent gas meter.
             smartContractState.GasMeter.Spend(nestedGasMeter.GasConsumed);
-
-            var revert = result.ExecutionException != null;
-
-            if (revert)
-            {
-                this.logger.LogTrace("(-)[CONTRACT_EXECUTION_FAILED]");
-                track.Rollback();
-                return CreateResult.Failed();
-            }
-
-            this.logger.LogTrace("(-)[CONTRACT_EXECUTION_SUCCEEDED]");
-            track.Commit();
-
-            // TODO: Add internaltransfer update here
-
-            this.contractLogHolder.AddRawLogs(logHolder.GetRawLogs());
 
             return CreateResult.Succeeded(address.ToAddress(this.network));
         }
@@ -138,7 +118,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             // For a method call, send all the gas unless an amount was selected.Should only call trusted methods so re - entrance is less problematic.
             ulong gasBudget = (gasLimit != 0) ? gasLimit : smartContractState.GasMeter.GasAvailable;
 
-            return ExecuteTransferFundsToContract(contractCode, smartContractState, addressTo, amountToTransfer, methodName, parameters, gasBudget);
+            return ExecuteTransferFundsToContract(smartContractState, addressTo, amountToTransfer, methodName, parameters, gasBudget);
         }
 
         ///<inheritdoc />
@@ -172,15 +152,13 @@ namespace Stratis.SmartContracts.Executor.Reflection
             object[] parameters = new object[] { };
             ulong gasBudget = DefaultGasLimit; // for Transfer always send limited gas to prevent re-entrance.
 
-            return ExecuteTransferFundsToContract(contractCode, smartContractState, addressTo, amountToTransfer, methodName, parameters, gasBudget);
+            return ExecuteTransferFundsToContract(smartContractState, addressTo, amountToTransfer, methodName, parameters, gasBudget);
         }
 
         /// <summary>
         /// If the address to where the funds will be tranferred to is a contract, instantiate and execute it.
         /// </summary>
-        private ITransferResult ExecuteTransferFundsToContract(
-            byte[] contractCode,
-            ISmartContractState smartContractState,
+        private ITransferResult ExecuteTransferFundsToContract(ISmartContractState smartContractState,
             Address addressTo,
             ulong amountToTransfer,
             string methodName,

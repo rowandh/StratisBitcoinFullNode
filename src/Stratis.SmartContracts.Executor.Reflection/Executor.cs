@@ -6,7 +6,6 @@ using Stratis.SmartContracts.Core;
 using Stratis.SmartContracts.Core.State;
 using Stratis.SmartContracts.Core.State.AccountAbstractionLayer;
 using Stratis.SmartContracts.Executor.Reflection.ContractLogging;
-using Stratis.SmartContracts.Executor.Reflection.Exceptions;
 using Stratis.SmartContracts.Executor.Reflection.Serialization;
 using Block = Stratis.SmartContracts.Core.Block;
 
@@ -23,12 +22,22 @@ namespace Stratis.SmartContracts.Executor.Reflection
         List<TransferInfo> InternalTransfers { get; }
         void Rollback();
         void Commit();
+        IState Nest(ulong txAmount);
+        ulong GetNonceAndIncrement();
+        uint256 TransactionHash { get; }
     }
 
     public class State : IState
     {
         private readonly IContractStateRepository parentRepository;
         private readonly ulong originalNonce;
+        private readonly IState parent;
+
+        private State(IState parent, IContractStateRepository repository, IBlock block, Network network, ulong txAmount, uint256 transactionHash, ulong nonce = 0)
+            : this(repository, block, network, txAmount, transactionHash, nonce)
+        {
+            this.parent = parent;
+        }
 
         public State(IContractStateRepository repository, IBlock block, Network network, ulong txAmount,
             uint256 transactionHash, ulong nonce = 0)
@@ -83,11 +92,27 @@ namespace Stratis.SmartContracts.Executor.Reflection
         }
 
         /// <summary>
-        /// Commits the state transition.
+        /// Commits the state transition. Updates the parent state if necessary.
         /// </summary>
         public void Commit()
         {
             this.Repository.Commit();
+
+            // Update the parent
+            if (this.parent != null)
+            {
+                this.parent.InternalTransfers.AddRange(this.InternalTransfers);
+                this.parent.LogHolder.AddRawLogs(this.LogHolder.GetRawLogs());
+                while (this.parent.Nonce < this.Nonce)
+                {
+                    this.parent.GetNonceAndIncrement();
+                }
+            }
+        }
+
+        public IState Nest(ulong txAmount)
+        {
+            return new State(this, this.Repository, this.Block, this.Network, txAmount, this.TransactionHash, this.Nonce);
         }
     }
 
@@ -110,20 +135,19 @@ namespace Stratis.SmartContracts.Executor.Reflection
         public bool IsCreation { get; set; }
     }
 
+    // Spend base gas
+    // Invoke VM
+    // -> Can nest a state transition based on this one but with new:
+    //      - State repository (nested)
+    //      - Gas meter (different gas allowance)
+    //      - Balance
+    //      - Log holder (logs are only committed if execution successful)
+    //      - Internal transfers (only committed if execution successful)
+    // and same
+    //      - Nonce
+    // Commit
     public class StateTransition
     {
-        // Spend base gas
-        // Invoke VM
-        // -> Can nest a state transition based on this one but with new:
-        //      - State repository (nested)
-        //      - Gas meter (different gas allowance)
-        //      - Balance
-        //      - Log holder (logs are only committed if execution successful)
-        //      - Internal transfers (only committed if execution successful)
-        // and same
-        //      - Nonce
-        // Commit
-
         public StateTransition(IState state, ISmartContractVirtualMachine vm, Network network, Message message)
         {
             this.State = state;
@@ -165,6 +189,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             {
                 this.State.Commit();
             }
+
             return (result, gasMeter);
         }
 
