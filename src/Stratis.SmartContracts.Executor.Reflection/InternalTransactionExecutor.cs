@@ -286,7 +286,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                     txContext.BlockHeight,
                     txContext.Coinbase.ToAddress(this.network)
                 ),
-                new Message(
+                new Core.Message(
                     contractAddress.ToAddress(this.network),
                     txContext.From.ToAddress(this.network),
                     txContext.Amount
