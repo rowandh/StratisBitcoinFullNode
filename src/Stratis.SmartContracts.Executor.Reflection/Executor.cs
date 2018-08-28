@@ -323,45 +323,5 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             return executionResult;
         }
-
-        /// <summary>
-        /// Sets up the state object for the contract execution
-        /// </summary>
-        private ISmartContractState SetupState(
-            IContractLogHolder contractLogger,
-            List<TransferInfo> internalTransferList,
-            IGasMeter gasMeter,
-            IContractStateRepository repository,
-            ITransactionContext transactionContext,
-            uint160 contractAddress)
-        {
-            IPersistenceStrategy persistenceStrategy =
-                new MeteredPersistenceStrategy(repository, gasMeter, new BasicKeyEncodingStrategy());
-
-            var persistentState = new PersistentState(persistenceStrategy, this.contractPrimitiveSerializer, contractAddress);
-
-            IInternalTransactionExecutor internalTransactionExecutor = this.internalTransactionExecutorFactory.Create(this.vm, contractLogger, repository, internalTransferList, transactionContext);
-
-            var balanceState = new BalanceState(repository, transactionContext.Amount, internalTransferList);
-
-            var contractState = new SmartContractState(
-                new Block(
-                    transactionContext.BlockHeight,
-                    transactionContext.Coinbase.ToAddress(this.network)
-                ),
-                new Core.Message(
-                    contractAddress.ToAddress(this.network),
-                    transactionContext.From.ToAddress(this.network),
-                    transactionContext.Amount
-                ),
-                persistentState,
-                gasMeter,
-                contractLogger,
-                internalTransactionExecutor,
-                new InternalHashHelper(),
-                () => balanceState.GetBalance(contractAddress));
-
-            return contractState;
-        }
     }
 }
