@@ -217,8 +217,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             var code = track.GetCode(address);
             var type = track.GetContractType(address);
 
-            VmExecutionResult result = this.vm.ExecuteMethod(track, 
-                call,
+            VmExecutionResult result = this.vm.ExecuteMethod(call,
                 state,
                 code,
                 type);

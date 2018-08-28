@@ -234,7 +234,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             VmExecutionResult result = callData.IsCreateContract
                 ? this.vm.Create(this.stateSnapshot, message.Method, state, message.Code)
-                : this.vm.ExecuteMethod(this.stateSnapshot, message.Method, state, message.Code, message.Type);
+                : this.vm.ExecuteMethod(message.Method, state, message.Code, message.Type);
 
             var revert = result.ExecutionException != null;
 

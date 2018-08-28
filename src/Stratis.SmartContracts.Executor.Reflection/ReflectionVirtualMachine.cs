@@ -113,7 +113,8 @@ namespace Stratis.SmartContracts.Executor.Reflection
         /// <summary>
         /// Invokes a method on an existing smart contract
         /// </summary>
-        public VmExecutionResult ExecuteMethod(IContractStateRepository repository, MethodCall methodCall, ISmartContractState contractState, byte[] contractCode, string typeName)
+        public VmExecutionResult ExecuteMethod(MethodCall methodCall, ISmartContractState contractState,
+            byte[] contractCode, string typeName)
         {
             this.logger.LogTrace("(){0}:{1}", nameof(methodCall.Name), methodCall.Name);
 
