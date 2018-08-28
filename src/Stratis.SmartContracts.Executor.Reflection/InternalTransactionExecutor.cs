@@ -44,7 +44,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
         {
             // TODO: Expend any neccessary costs.
 
-            ulong gasBudget = (gasLimit != 0) ? gasLimit : DefaultGasLimit;
+            ulong gasBudget = (gasLimit != 0) ? gasLimit : smartContractState.GasMeter.GasAvailable;
 
             // Ensure we have enough gas left to be able to fund the new GasMeter.
             if (smartContractState.GasMeter.GasAvailable < gasBudget)
