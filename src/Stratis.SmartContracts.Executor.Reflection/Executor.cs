@@ -11,6 +11,131 @@ using Block = Stratis.SmartContracts.Core.Block;
 
 namespace Stratis.SmartContracts.Executor.Reflection
 {
+    public interface IState
+    {
+        int Nonce { get; }
+        Network Network { get; }
+        uint160 Address { get; }
+        IContractStateRepository Repository { get; }
+        IContractLogHolder LogHolder { get; }
+        BalanceState BalanceState { get; }
+        GasMeter GasMeter { get; set; }
+        List<TransferInfo> InternalTransfers { get; }
+        ISmartContractState ContractState(ISmartContractVirtualMachine vm, IContractPrimitiveSerializer serializer, InternalTransactionExecutorFactory internalTransactionExecutorFactory);
+    }
+
+    public class State : IState
+    {
+        public State(IContractStateRepository repository, Network network, ulong txAmount, uint160 contractAddress, int nonce = 0)
+        {
+            this.Repository = repository.StartTracking();
+            this.LogHolder = new ContractLogHolder(network);
+            this.InternalTransfers = new List<TransferInfo>();
+            this.BalanceState = new BalanceState(this.Repository, txAmount, this.InternalTransfers);
+            this.Address = contractAddress;
+            this.Network = network;
+            this.Nonce = nonce;
+        }
+
+        public int Nonce { get; }
+
+        public Network Network { get; }
+
+        public uint160 Address { get; }
+
+        public IContractStateRepository Repository { get; }
+
+        public IContractLogHolder LogHolder { get; }
+
+        public BalanceState BalanceState { get; }
+
+        public GasMeter GasMeter { get; set; }
+
+        public List<TransferInfo> InternalTransfers { get; }
+        
+        public ISmartContractState ContractState(ISmartContractVirtualMachine vm, IContractPrimitiveSerializer serializer, InternalTransactionExecutorFactory internalTransactionExecutorFactory)
+        {
+            IPersistenceStrategy persistenceStrategy =
+                new MeteredPersistenceStrategy(this.Repository, this.GasMeter, new BasicKeyEncodingStrategy());
+
+            var persistentState = new PersistentState(persistenceStrategy, serializer, this.Address);
+
+            IInternalTransactionExecutor internalTransactionExecutor = internalTransactionExecutorFactory
+                .Create(
+                    vm, this.LogHolder, 
+                    this.Repository,
+                    this.InternalTransfers,
+                    null);
+
+            var balanceState = this.BalanceState;
+
+            var contractState = new SmartContractState(
+                new Block(
+                    0,
+                    new Address("TEST")
+                ),
+                new Message(
+                    this.Address.ToAddress(this.Network),
+                    default(Address),
+                    0
+                ),
+                persistentState,
+                this.GasMeter,
+                this.LogHolder,
+                internalTransactionExecutor,
+                new InternalHashHelper(),
+                () => balanceState.GetBalance(this.Address));
+
+            return contractState;
+        }
+    }
+
+    public class Message2
+    {
+        public Gas GasLimit { get; set; }
+
+        public uint160 To { get; set; }
+
+        public uint160 From { get; set; }
+
+        public ulong Amount { get; set; }
+        
+        public byte[] Code { get; set; }
+
+        public MethodCall Method { get; set; }
+
+        public string Type { get; set; }
+
+        public bool IsCreation { get; set; }
+    }
+
+    public class StateTransition
+    {
+        // Spend base gas
+        // Invoke VM
+        // -> Can nest a state transition based on this one but with new:
+        //      - State repository (nested)
+        //      - Gas meter (different gas allowance)
+        //      - Balance
+        //      - Log holder (logs are only committed if execution successful)
+        //      - Internal transfers (only committed if execution successful)
+        // and same
+        //      - Nonce
+        // Commit
+
+        public StateTransition(ISmartContractVirtualMachine vm)
+        {
+            this.Vm = vm;
+        }
+
+        public ISmartContractVirtualMachine Vm { get; }
+
+        public void Apply(State state, Message2 message)
+        {
+
+        }
+    }
+
     /// <summary>
     /// Deserializes raw contract transaction data, dispatches a call to the VM and commits the result to the state repository
     /// </summary>
@@ -73,10 +198,37 @@ namespace Stratis.SmartContracts.Executor.Reflection
             var contractLogger = new ContractLogHolder(this.network);
             var internalTransfers = new List<TransferInfo>();
 
+            // Generate address (if required)
+            // Get code from DB (if required)
+            // Get type name from DB (if required)
+            // Create state
             var address = creation
-                ? this.addressGenerator.GenerateAddress(transactionContext.TransactionHash,
-                    context.GetNonceAndIncrement())
+                ? this.addressGenerator.GenerateAddress(transactionContext.TransactionHash, context.GetNonceAndIncrement())
                 : callData.ContractAddress;
+
+            var code = creation
+                ? callData.ContractExecutionCode
+                : this.stateSnapshot.GetCode(callData.ContractAddress);
+
+            var type = creation
+                ? null
+                : this.stateSnapshot.GetContractType(callData.ContractAddress);
+
+            var message = new Message2();
+
+            message.To = address;
+            message.From = transactionContext.Sender;
+            message.Amount = transactionContext.TxOutValue;
+            message.Code = code;
+            message.Type = type;
+            message.GasLimit = callData.GasLimit;
+            message.Method = new MethodCall(callData.MethodName, callData.MethodParameters);
+            message.IsCreation = creation;
+
+            var stateTransition = new StateTransition(this.vm);
+            var state2 = new State(this.stateSnapshot, this.network, transactionContext.TxOutValue, address);
+            
+            stateTransition.Apply(state2, message);
 
             var state = this.SetupState(contractLogger, internalTransfers, gasMeter, this.stateSnapshot, context, address);
 
