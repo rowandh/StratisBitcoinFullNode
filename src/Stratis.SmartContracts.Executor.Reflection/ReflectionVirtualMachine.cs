@@ -113,31 +113,24 @@ namespace Stratis.SmartContracts.Executor.Reflection
         /// <summary>
         /// Invokes a method on an existing smart contract
         /// </summary>
-        public VmExecutionResult ExecuteMethod(IContractStateRepository repository, ICallData callData, ISmartContractState contractState)
+        public VmExecutionResult ExecuteMethod(IContractStateRepository repository, MethodCall methodCall, ISmartContractState contractState, byte[] contractCode, string typeName)
         {
-            this.logger.LogTrace("(){0}:{1}", nameof(callData.MethodName), callData.MethodName);
+            this.logger.LogTrace("(){0}:{1}", nameof(methodCall.Name), methodCall.Name);
 
-            if (callData.MethodName == null)
+            if (methodCall.Name == null)
             {
                 this.logger.LogTrace("(-)[CALLCONTRACT_METHODNAME_NOT_GIVEN]");
                 return VmExecutionResult.Error(null);
             }
 
-            byte[] contractExecutionCode = repository.GetCode(callData.ContractAddress);
-
-            string typeName = repository.GetContractType(callData.ContractAddress);
-
-            if (contractExecutionCode == null)
+            if (contractCode == null)
             {
-                return VmExecutionResult.Error(new SmartContractDoesNotExistException(callData.MethodName));
+                return VmExecutionResult.Error(new SmartContractDoesNotExistException(methodCall.Name));
             }
-
-            // TODO consolidate this with CallData.
-            MethodCall methodCall = new MethodCall(callData.MethodName, callData.MethodParameters);
 
             ContractByteCode code;
 
-            using (IContractModuleDefinition moduleDefinition = this.moduleDefinitionReader.Read(contractExecutionCode))
+            using (IContractModuleDefinition moduleDefinition = this.moduleDefinitionReader.Read(contractCode))
             {
                 moduleDefinition.InjectMethodGas(typeName, methodCall);
 
@@ -147,7 +140,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             Result<IContract> contractLoadResult = this.Load(
                 code,
                 typeName,
-                callData.ContractAddress,
+                contractState.Message.ContractAddress.ToUint160(this.network),
                 contractState);
 
             if (!contractLoadResult.IsSuccess)
@@ -164,7 +157,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             IContract contract = contractLoadResult.Value;
 
-            LogExecutionContext(this.logger, contract.State.Block, contract.State.Message, contract.Address, callData);
+            //LogExecutionContext(this.logger, contract.State.Block, contract.State.Message, contract.Address, methodCall1);
 
             IContractInvocationResult invocationResult = contract.Invoke(methodCall);
 

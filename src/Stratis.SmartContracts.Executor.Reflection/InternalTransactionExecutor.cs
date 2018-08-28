@@ -212,9 +212,16 @@ namespace Stratis.SmartContracts.Executor.Reflection
             var state = this.SetupState(smartContractState, logHolder, this.internalTransferList,
                 nestedGasMeter, track, context, callData.ContractAddress);
 
+            var call = new MethodCall(methodName, parameters);
+            var address = addressTo.ToUint160(this.network);
+            var code = track.GetCode(address);
+            var type = track.GetContractType(address);
+
             VmExecutionResult result = this.vm.ExecuteMethod(track, 
-                callData,
-                state);
+                call,
+                state,
+                code,
+                type);
 
             // Update parent gas meter.
             smartContractState.GasMeter.Spend(nestedGasMeter.GasConsumed);

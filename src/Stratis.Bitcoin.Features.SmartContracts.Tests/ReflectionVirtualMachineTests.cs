@@ -48,15 +48,14 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
 
             byte[] contractExecutionCode = compilationResult.Compilation;
 
-            var callData = new CallData((Gas)5000000, new uint160(1), "NoParamsTest");
-
-            this.state.SetCode(callData.ContractAddress, contractExecutionCode);
-            this.state.SetContractType(callData.ContractAddress, "StorageTest");
+            var callData = new MethodCall("NoParamsTest");
 
             VmExecutionResult result = this.vm.ExecuteMethod(
                 this.state,
                 callData,
-                this.contractState);
+                this.contractState, 
+                contractExecutionCode,
+                "StorageTest");
 
             Assert.Null(result.ExecutionException);
             Assert.True((bool)result.Result);
@@ -70,15 +69,14 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
 
             byte[] contractExecutionCode = compilationResult.Compilation;
             var methodParameters = new object[] { (int)5 };
-            var callData = new CallData((Gas)5000000, new uint160(1), "OneParamTest", methodParameters);
+            var callData = new MethodCall("OneParamTest", methodParameters);
             
-            this.state.SetCode(callData.ContractAddress, contractExecutionCode);
-            this.state.SetContractType(callData.ContractAddress, "StorageTest");
-
             VmExecutionResult result = this.vm.ExecuteMethod(
                 this.state,
                 callData,
-                this.contractState);
+                this.contractState,
+                contractExecutionCode,
+                "StorageTest");
 
             Assert.Null(result.ExecutionException);
             Assert.Equal(methodParameters[0], result.Result);

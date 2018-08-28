@@ -11,7 +11,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             string typeName = null);
 
         VmExecutionResult ExecuteMethod(IContractStateRepository repository,
-            ICallData callData,
-            ISmartContractState contractState);
+            MethodCall methodCall,
+            ISmartContractState contractState, byte[] contractCode, string typeName);
     }
 }
