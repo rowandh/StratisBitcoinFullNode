@@ -210,7 +210,7 @@ namespace Stratis.Bitcoin.IntegrationTests.SmartContracts
 
                 this.serializer = CallDataSerializer.Default;
                 this.AddressGenerator = new AddressGenerator();
-                this.internalTxExecutorFactory = new InternalTransactionExecutorFactory(loggerFactory, this.network, this.AddressGenerator);
+                this.internalTxExecutorFactory = new InternalTransactionExecutorFactory(loggerFactory, this.network, this.AddressGenerator, this.vm);
                 this.assemblyLoader = new ContractAssemblyLoader();
                 this.moduleDefinitionReader = new ContractModuleDefinitionReader();
                 this.contractPrimitiveSerializer = new ContractPrimitiveSerializer(this.network);

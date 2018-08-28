@@ -72,7 +72,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
             var addressGenerator = new Mock<IAddressGenerator>();
             addressGenerator.Setup(a => a.GenerateAddress(It.IsAny<uint256>(), It.IsAny<ulong>())).Returns(newContractAddress);
 
-            var internalTransactionExecutorFactory = new InternalTransactionExecutorFactory(loggerFactory, network, addressGenerator.Object);
+            var internalTransactionExecutorFactory = new InternalTransactionExecutorFactory(loggerFactory, network, addressGenerator.Object, vm.Object);
 
             var sut = new Executor(
                 loggerFactory,

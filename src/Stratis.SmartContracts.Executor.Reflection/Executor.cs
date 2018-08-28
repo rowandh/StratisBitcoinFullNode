@@ -215,7 +215,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 persistentState,
                 gasMeter,
                 state.LogHolder,
-                this.InternalTransactionExecutorFactory.Create(this.Vm, this.State),
+                this.InternalTransactionExecutorFactory.Create(this.State),
                 new InternalHashHelper(),
                 () => state.BalanceState.GetBalance(this.Message.To));
 

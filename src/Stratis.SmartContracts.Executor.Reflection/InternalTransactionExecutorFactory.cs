@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using NBitcoin;
-using Stratis.SmartContracts.Core.State;
 
 namespace Stratis.SmartContracts.Executor.Reflection
 {
@@ -12,21 +11,25 @@ namespace Stratis.SmartContracts.Executor.Reflection
         private readonly ILoggerFactory loggerFactory;
         private readonly Network network;
         private readonly IAddressGenerator addressGenerator;
+        private readonly ISmartContractVirtualMachine vm;
 
-        public InternalTransactionExecutorFactory(ILoggerFactory loggerFactory, Network network,
-            IAddressGenerator addressGenerator)
+        public InternalTransactionExecutorFactory(
+            ILoggerFactory loggerFactory,
+            Network network,
+            IAddressGenerator addressGenerator,
+            ISmartContractVirtualMachine vm)
         {
             this.loggerFactory = loggerFactory;
             this.network = network;
             this.addressGenerator = addressGenerator;
+            this.vm = vm;
         }
 
-        public IInternalTransactionExecutor Create(ISmartContractVirtualMachine vm,
-            IState baseState)
+        public IInternalTransactionExecutor Create(IState baseState)
         {
             return new InternalTransactionExecutor(
                 this,
-                vm,
+                this.vm,
                 this.addressGenerator,
                 this.loggerFactory,
                 this.network,
