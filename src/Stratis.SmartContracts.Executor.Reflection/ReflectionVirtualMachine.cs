@@ -40,7 +40,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
         /// <summary>
         /// Creates a new instance of a smart contract by invoking the contract's constructor
         /// </summary>
-        public VmExecutionResult Create(IContractStateRepository repository, ICreateData createData, ISmartContractState contractState, string typeName = null)
+        public VmExecutionResult Create(IContractStateRepository repository, MethodCall methodCall, ISmartContractState contractState, byte[] contractCode, string typeName = null)
         {
             this.logger.LogTrace("()");
 
@@ -48,7 +48,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             ContractByteCode code;
 
             // Decompile the contract execution code and validate it.
-            using (IContractModuleDefinition moduleDefinition = this.moduleDefinitionReader.Read(createData.ContractExecutionCode))
+            using (IContractModuleDefinition moduleDefinition = this.moduleDefinitionReader.Read(contractCode))
             {
                 SmartContractValidationResult validation = moduleDefinition.Validate(this.validator);
 
@@ -86,13 +86,13 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             IContract contract = contractLoadResult.Value;
 
-            LogExecutionContext(this.logger, contract.State.Block, contract.State.Message, contract.Address, createData);
+            //LogExecutionContext(this.logger, contract.State.Block, contract.State.Message, contract.Address, methodCall);
 
             // Create an account for the contract in the state repository.
             repository.CreateAccount(contract.Address);
 
             // Invoke the constructor of the provided contract code
-            IContractInvocationResult invocationResult = contract.InvokeConstructor(createData.MethodParameters);
+            IContractInvocationResult invocationResult = contract.InvokeConstructor(methodCall.Parameters);
 
             if (!invocationResult.IsSuccess)
             {
@@ -104,7 +104,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             
             this.logger.LogTrace("(-):{0}={1}", nameof(contract.Address), contract.Address);
 
-            repository.SetCode(contract.Address, createData.ContractExecutionCode);
+            repository.SetCode(contract.Address, contractCode);
             repository.SetContractType(contract.Address, contract.Type.Name);
 
             return VmExecutionResult.Success(invocationResult.Return);

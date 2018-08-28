@@ -80,8 +80,6 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             IContractStateRepository track = this.contractStateRepository.StartTracking();
 
-            var createData = new CreateData(nestedGasMeter.GasLimit, contractCode, parameters);
-
             var address =
                 this.addressGenerator.GenerateAddress(context.TransactionHash, context.GetNonceAndIncrement());
 
@@ -90,8 +88,10 @@ namespace Stratis.SmartContracts.Executor.Reflection
             var state = this.SetupState(smartContractState, logHolder, this.internalTransferList,
                 nestedGasMeter, track, context, address);
 
+            var methodCall = new MethodCall(null, parameters);
+
             // Do create in vm
-            VmExecutionResult result = this.vm.Create(track, createData, state, typeof(T).Name);
+            VmExecutionResult result = this.vm.Create(track, methodCall, state, contractCode, typeof(T).Name);
 
             // Update parent gas meter.
             smartContractState.GasMeter.Spend(nestedGasMeter.GasConsumed);
