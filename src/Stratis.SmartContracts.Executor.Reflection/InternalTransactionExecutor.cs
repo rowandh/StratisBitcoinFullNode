@@ -2,7 +2,6 @@
 using NBitcoin;
 using Stratis.SmartContracts.Core;
 using Stratis.SmartContracts.Core.Exceptions;
-using Stratis.SmartContracts.Core.State;
 using Stratis.SmartContracts.Core.State.AccountAbstractionLayer;
 
 namespace Stratis.SmartContracts.Executor.Reflection
@@ -67,6 +66,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             message.Code = contractCode;
             message.GasLimit = (Gas) gasBudget;
             message.Method = new MethodCall(null, parameters);
+            message.Type = typeof(T).Name;
             message.IsCreation = true;
 
             var nestedState = this.baseState.Nest(amountToTransfer);

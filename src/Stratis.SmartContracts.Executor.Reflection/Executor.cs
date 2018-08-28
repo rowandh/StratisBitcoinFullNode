@@ -178,7 +178,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             var contractState = ContractState(gasMeter, this.State);
 
             var result = this.Message.IsCreation
-                ? this.Vm.Create(this.State.Repository, this.Message.Method, contractState, this.Message.Code)
+                ? this.Vm.Create(this.State.Repository, this.Message.Method, contractState, this.Message.Code, this.Message.Type)
                 : this.Vm.ExecuteMethod(this.Message.Method, contractState, this.Message.Code, this.Message.Type);
 
             // TODO decide the exact conditions under which we revert
