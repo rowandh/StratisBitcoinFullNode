@@ -103,6 +103,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             {
                 this.parent.InternalTransfers.AddRange(this.InternalTransfers);
                 this.parent.LogHolder.AddRawLogs(this.LogHolder.GetRawLogs());
+
                 while (this.parent.Nonce < this.Nonce)
                 {
                     this.parent.GetNonceAndIncrement();
@@ -148,13 +149,17 @@ namespace Stratis.SmartContracts.Executor.Reflection
     // Commit
     public class StateTransition
     {
-        public StateTransition(IState state, ISmartContractVirtualMachine vm, Network network, Message message)
+        public StateTransition(InternalTransactionExecutorFactory internalTransactionExecutorFactory, IState state,
+            ISmartContractVirtualMachine vm, Network network, Message message)
         {
+            this.InternalTransactionExecutorFactory = internalTransactionExecutorFactory;
             this.State = state;
             this.Vm = vm;
             this.Network = network;
             this.Message = message;
         }
+
+        public InternalTransactionExecutorFactory InternalTransactionExecutorFactory { get; }
 
         public Message Message { get; }
 
@@ -210,7 +215,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 persistentState,
                 gasMeter,
                 state.LogHolder,
-                null,
+                this.InternalTransactionExecutorFactory.Create(this.Vm, this.State),
                 new InternalHashHelper(),
                 () => state.BalanceState.GetBalance(this.Message.To));
 
@@ -301,7 +306,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             message.Method = new MethodCall(callData.MethodName, callData.MethodParameters);
             message.IsCreation = creation;
 
-            var stateTransition = new StateTransition(state, this.vm, this.network, message);
+            var stateTransition = new StateTransition(this.internalTransactionExecutorFactory, state, this.vm, this.network, message);
             
             (var result, var gasMeter) = stateTransition.Apply();
 
