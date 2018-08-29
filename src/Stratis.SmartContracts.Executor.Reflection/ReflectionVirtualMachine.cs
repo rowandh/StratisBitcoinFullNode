@@ -130,8 +130,6 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 return VmExecutionResult.Error(new SmartContractDoesNotExistException(methodCall.Name));
             }
 
-            typeName = repository.GetContractType(contractState.Message.ContractAddress.ToUint160(this.network));
-
             ContractByteCode code;
 
             using (IContractModuleDefinition moduleDefinition = this.moduleDefinitionReader.Read(contractCode))
