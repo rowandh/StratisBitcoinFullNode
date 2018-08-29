@@ -117,6 +117,52 @@ namespace Stratis.SmartContracts.Executor.Reflection
         }
     }
 
+    public class TransferMessage
+    {
+        public uint160 To { get; set; }
+
+        public uint160 From { get; set; }
+
+        public ulong Amount { get; set; }
+
+        /// <summary>
+        /// Required for fallback calls.
+        /// </summary>
+        public Gas GasLimit { get; set; }
+    }
+
+    public class CreateMessage : TransferMessage
+    {
+        public uint160 From { get; set; }
+
+        public ulong Amount { get; set; }
+
+        public byte[] Code { get; set; }
+
+        public MethodCall Method { get; set; }
+
+        public string Type { get; set; }
+
+        public bool IsCreation => true;
+    }
+
+    public class CallMessage : TransferMessage
+    {
+        public uint160 To { get; set; }
+
+        public uint160 From { get; set; }
+
+        public ulong Amount { get; set; }
+
+        public byte[] Code { get; set; }
+
+        public MethodCall Method { get; set; }
+
+        public string Type { get; set; }
+
+        public bool IsCreation => false;
+    }
+
     public class Message
     {
         public Gas GasLimit { get; set; }
@@ -136,17 +182,6 @@ namespace Stratis.SmartContracts.Executor.Reflection
         public bool IsCreation { get; set; }
     }
 
-    // Spend base gas
-    // Invoke VM
-    // -> Can nest a state transition based on this one but with new:
-    //      - State repository (nested)
-    //      - Gas meter (different gas allowance)
-    //      - Balance
-    //      - Log holder (logs are only committed if execution successful)
-    //      - Internal transfers (only committed if execution successful)
-    // and same
-    //      - Nonce
-    // Commit
     public class StateTransition
     {
         public StateTransition(InternalTransactionExecutorFactory internalTransactionExecutorFactory, IState state,
@@ -295,16 +330,18 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 ? null
                 : this.stateSnapshot.GetContractType(callData.ContractAddress);
 
-            var message = new Message();
+            var message = new Message
+            {
+                To = address,
+                From = transactionContext.Sender,
+                Amount = transactionContext.TxOutValue,
+                Code = code,
+                Type = type,
+                GasLimit = callData.GasLimit,
+                Method = new MethodCall(callData.MethodName, callData.MethodParameters),
+                IsCreation = creation
+            };
 
-            message.To = address;
-            message.From = transactionContext.Sender;
-            message.Amount = transactionContext.TxOutValue;
-            message.Code = code;
-            message.Type = type;
-            message.GasLimit = callData.GasLimit;
-            message.Method = new MethodCall(callData.MethodName, callData.MethodParameters);
-            message.IsCreation = creation;
 
             var stateTransition = new StateTransition(this.internalTransactionExecutorFactory, state, this.vm, this.network, message);
             

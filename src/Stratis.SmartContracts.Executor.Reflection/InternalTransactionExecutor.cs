@@ -9,7 +9,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
     ///<inheritdoc/>
     public sealed class InternalTransactionExecutor : IInternalTransactionExecutor
     {
-        private const ulong DefaultGasLimit = GasPriceList.BaseCost - 1;
+        private const ulong DefaultGasLimit = GasPriceList.BaseCost * 2 - 1;
 
         private readonly IAddressGenerator addressGenerator;
         private readonly ILogger logger;
@@ -105,7 +105,17 @@ namespace Stratis.SmartContracts.Executor.Reflection
             // For a method call, send all the gas unless an amount was selected.Should only call trusted methods so re - entrance is less problematic.
             ulong gasBudget = (gasLimit != 0) ? gasLimit : smartContractState.GasMeter.GasAvailable;
 
-            return ExecuteTransferFundsToContract(contractCode, smartContractState, addressTo, amountToTransfer, methodName, parameters, gasBudget);
+            var message = new Message
+            {
+                To = addressTo.ToUint160(this.network),
+                From = smartContractState.Message.ContractAddress.ToUint160(this.network),
+                Amount = amountToTransfer,
+                Code = contractCode,
+                GasLimit = (Gas) gasBudget,
+                Method = new MethodCall(methodName, parameters)
+            };
+
+            return ExecuteTransferFundsToContract(smartContractState, addressTo, amountToTransfer, message);
         }
 
         ///<inheritdoc />
@@ -118,6 +128,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             EnsureContractHasEnoughBalance(smartContractState, amountToTransfer);
 
             // Discern whether this is a contract or an ordinary address.
+            // TODO this should also be done in the state transition
             byte[] contractCode = this.baseState.Repository.GetCode(addressTo.ToUint160(this.network));
 
             if (contractCode == null || contractCode.Length == 0)
@@ -136,39 +147,35 @@ namespace Stratis.SmartContracts.Executor.Reflection
             this.logger.LogTrace("(-)[TRANSFER_TO_CONTRACT]");
 
             // Calling a receive handler:
-            string methodName = MethodCall.ExternalReceiveHandlerName;
-            object[] parameters = { };
             ulong gasBudget = DefaultGasLimit; // for Transfer always send limited gas to prevent re-entrance.
 
-            return ExecuteTransferFundsToContract(contractCode, smartContractState, addressTo, amountToTransfer, methodName, parameters, gasBudget);
+            var message = new Message
+            {
+                To = addressTo.ToUint160(this.network),
+                From = smartContractState.Message.ContractAddress.ToUint160(this.network),
+                Amount = amountToTransfer,
+                Code = contractCode,
+                GasLimit = (Gas) gasBudget,
+                Method = MethodCall.Receive()
+            };
+
+            return ExecuteTransferFundsToContract(smartContractState, addressTo, amountToTransfer, message);
         }
 
         /// <summary>
         /// If the address to where the funds will be tranferred to is a contract, instantiate and execute it.
         /// </summary>
         private ITransferResult ExecuteTransferFundsToContract(
-            byte[] contractCode,
             ISmartContractState smartContractState,
             Address addressTo,
             ulong amountToTransfer,
-            string methodName,
-            object[] parameters,
-            ulong gasBudget)
+            Message message)
         {
             this.logger.LogTrace("({0}:{1},{2}:{3})", nameof(addressTo), addressTo, nameof(amountToTransfer), amountToTransfer);
 
             // Ensure we have enough gas left to be able to fund the new GasMeter.
-            if (smartContractState.GasMeter.GasAvailable < gasBudget)
+            if (smartContractState.GasMeter.GasAvailable < message.GasLimit)
                 throw new InsufficientGasException();
-
-            var message = new Message();
-
-            message.To = addressTo.ToUint160(this.network);
-            message.From = smartContractState.Message.ContractAddress.ToUint160(this.network);
-            message.Amount = amountToTransfer;
-            message.Code = contractCode;
-            message.GasLimit = (Gas) gasBudget;
-            message.Method = new MethodCall(methodName, parameters);
 
             var state = this.baseState.Nest(amountToTransfer);
 
