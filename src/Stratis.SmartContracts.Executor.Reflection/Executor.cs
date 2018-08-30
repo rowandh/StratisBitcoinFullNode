@@ -95,7 +95,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 result = state.Apply(message);
             }
 
-            var revert = result.Success;
+            var revert = !result.Success;
 
             Transaction internalTransaction = this.transferProcessor.Process(
                 this.stateSnapshot,

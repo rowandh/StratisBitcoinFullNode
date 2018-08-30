@@ -133,7 +133,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             return new StateTransitionResult
             {
-                Success = revert,
+                Success = !revert,
                 GasConsumed = gasMeter.GasConsumed,
                 VmExecutionResult = result,
                 ContractAddress = address,
@@ -184,7 +184,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             return new StateTransitionResult
             {
-                Success = revert,
+                Success = !revert,
                 GasConsumed = gasMeter.GasConsumed,
                 VmExecutionResult = result,
                 ContractAddress = address,
@@ -252,7 +252,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             return new StateTransitionResult
             {
-                Success = revert,
+                Success = !revert,
                 GasConsumed = gasMeter.GasConsumed,
                 VmExecutionResult = result,
                 Kind = StateTransitionKind.Call,
@@ -284,7 +284,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
                 return new StateTransitionResult
                 {
-                    Success = false,
+                    Success = true,
                     GasConsumed = (Gas)0,
                     Kind = StateTransitionKind.Transfer,
                     TransferResult = TransferResult.Empty(),
