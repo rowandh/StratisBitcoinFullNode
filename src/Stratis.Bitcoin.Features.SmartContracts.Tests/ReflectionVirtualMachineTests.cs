@@ -51,7 +51,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
 
             var callData = new MethodCall("NoParamsTest");
 
-            VmExecutionResult result = this.vm.ExecuteMethod(this.state, callData,
+            VmExecutionResult result = this.vm.ExecuteMethod(callData,
                 this.contractState, 
                 contractExecutionCode,
                 "StorageTest");
@@ -70,7 +70,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
             var methodParameters = new object[] { (int)5 };
             var callData = new MethodCall("OneParamTest", methodParameters);
             
-            VmExecutionResult result = this.vm.ExecuteMethod(this.state, callData,
+            VmExecutionResult result = this.vm.ExecuteMethod(callData,
                 this.contractState,
                 contractExecutionCode,
                 "StorageTest");
@@ -89,9 +89,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
             var methodParameters = new object[] { (ulong)5 };
             var callData = new MethodCall(null, methodParameters);
 
-            VmExecutionResult result = this.vm.Create(
-                this.state,
-                callData,
+            VmExecutionResult result = this.vm.Create(callData,
                 this.contractState,
                 contractExecutionCode);
 

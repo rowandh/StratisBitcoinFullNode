@@ -4,7 +4,6 @@ using CSharpFunctionalExtensions;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
 using Stratis.SmartContracts.Core;
-using Stratis.SmartContracts.Core.State;
 using Stratis.SmartContracts.Core.Validation;
 using Stratis.SmartContracts.Executor.Reflection.Compilation;
 using Stratis.SmartContracts.Executor.Reflection.Exceptions;
@@ -40,13 +39,13 @@ namespace Stratis.SmartContracts.Executor.Reflection
         /// <summary>
         /// Creates a new instance of a smart contract by invoking the contract's constructor
         /// </summary>
-        public VmExecutionResult Create(IContractStateRepository repository, MethodCall methodCall, ISmartContractState contractState, byte[] contractCode, string typeName = null)
+        public VmExecutionResult Create(MethodCall methodCall, ISmartContractState contractState, byte[] contractCode, string typeName = null)
         {
             this.logger.LogTrace("()");
 
             string typeToInstantiate;
             ContractByteCode code;
-
+            
             // Decompile the contract execution code and validate it.
             using (IContractModuleDefinition moduleDefinition = this.moduleDefinitionReader.Read(contractCode))
             {
@@ -107,9 +106,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
         /// <summary>
         /// Invokes a method on an existing smart contract
         /// </summary>
-        public VmExecutionResult ExecuteMethod(IContractStateRepository repository, MethodCall methodCall,
-            ISmartContractState contractState,
-            byte[] contractCode, string typeName)
+        public VmExecutionResult ExecuteMethod(MethodCall methodCall, ISmartContractState contractState, byte[] contractCode, string typeName)
         {
             this.logger.LogTrace("(){0}:{1}", nameof(methodCall.Name), methodCall.Name);
 

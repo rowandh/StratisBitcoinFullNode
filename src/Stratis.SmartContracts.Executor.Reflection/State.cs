@@ -157,7 +157,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             var contractState = this.ContractState(gasMeter, address, message, this.Repository);
 
-            var result = this.Vm.Create(this.Repository, method, contractState, code, type);
+            var result = this.Vm.Create(method, contractState, code, type);
 
             var revert = result.ExecutionException != null;
 
@@ -232,7 +232,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             var contractState = this.ContractState(gasMeter, message.To, message, this.Repository);
 
-            var result = this.Vm.ExecuteMethod(this.Repository, message.Method, contractState, contractCode, type);
+            var result = this.Vm.ExecuteMethod(message.Method, contractState, contractCode, type);
 
             var revert = result.ExecutionException != null;
 
