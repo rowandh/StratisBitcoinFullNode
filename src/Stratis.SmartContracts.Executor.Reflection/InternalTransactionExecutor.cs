@@ -60,9 +60,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             var nestedState = this.baseState.Nest(amountToTransfer);
 
-            var stateTransition = new StateTransition(this.internalTransactionExecutorFactory, nestedState, this.vm, this.network);
-
-            var result = stateTransition.Apply(message);
+            var result = nestedState.Apply(message);
 
             // Update parent gas meter.
             smartContractState.GasMeter.Spend(result.GasConsumed);
@@ -94,9 +92,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             var state = this.baseState.Nest(amountToTransfer);
 
-            var stateTransition = new StateTransition(this.internalTransactionExecutorFactory, state, this.vm, this.network);
-
-            var result = stateTransition.Apply(message);
+            var result = state.Apply(message);
 
             return result.TransferResult;
         }
@@ -123,9 +119,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             var state = this.baseState.Nest(amountToTransfer);
 
-            var stateTransition = new StateTransition(this.internalTransactionExecutorFactory, state, this.vm, this.network);
-
-            var result = stateTransition.Apply(message);
+            var result = state.Apply(message);
 
             return result.TransferResult;
         }

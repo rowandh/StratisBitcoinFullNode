@@ -64,9 +64,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 transactionContext.CoinbaseAddress.ToAddress(this.network)
             );
 
-            var state = new State(this.stateSnapshot, block, this.network, transactionContext.TxOutValue, transactionContext.TransactionHash, this.addressGenerator);
-
-            var stateTransition = new StateTransition(this.internalTransactionExecutorFactory, state, this.vm, this.network);
+            var state = new State(this.internalTransactionExecutorFactory, this.vm, this.stateSnapshot, block, this.network, transactionContext.TxOutValue, transactionContext.TransactionHash, this.addressGenerator);
 
             StateTransitionResult result;
 
@@ -81,7 +79,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                     Method = new MethodCall(null, callData.MethodParameters) // TODO handle constructor MethodCall name
                 };
 
-                result = stateTransition.Apply(message);
+                result = state.Apply(message);
             }
             else
             {
@@ -94,7 +92,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                     Method = new MethodCall(callData.MethodName, callData.MethodParameters),
                 };
 
-                result = stateTransition.Apply(message);
+                result = state.Apply(message);
             }
 
             var revert = result.Success;
