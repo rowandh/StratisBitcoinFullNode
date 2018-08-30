@@ -144,9 +144,14 @@ namespace Stratis.SmartContracts.Executor.Reflection
         public Gas GasLimit { get; set; }
     }
 
-    public class TransferMessage : CallMessage
+    public class P2PKHTransferMessage : BaseMessage
     {
-        public TransferMessage()
+
+    }
+
+    public class ContractTransferMessage : CallMessage
+    {
+        public ContractTransferMessage()
         {
             this.Method = MethodCall.Receive();
         }
@@ -154,11 +159,6 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
     public class ExternalCreateMessage : BaseMessage
     {
-        /// <summary>
-        /// All transfers have a destination.
-        /// </summary>
-        public uint160 To { get; set; }
-
         public byte[] Code { get; set; }
 
         public MethodCall Method { get; set; }
@@ -215,13 +215,13 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
         public ISmartContractVirtualMachine Vm { get; }
 
-        private (VmExecutionResult, GasMeter, uint160) ApplyInternal(Func<ISmartContractState, VmExecutionResult> vmInvoke, uint160 address)
+        private (VmExecutionResult, GasMeter, uint160) ApplyInternal(Func<ISmartContractState, VmExecutionResult> vmInvoke, uint160 address, BaseMessage message)
         {
-            var gasMeter = new GasMeter(this.Message.GasLimit);
+            var gasMeter = new GasMeter(message.GasLimit);
 
             gasMeter.Spend((Gas)GasPriceList.BaseCost);
 
-            var contractState = ContractState(gasMeter, this.State, address);
+            var contractState = ContractState(gasMeter, this.State, address, message);
 
             var result = vmInvoke(contractState);
             
@@ -241,19 +241,21 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
         public (VmExecutionResult, GasMeter, uint160 address) Apply(ExternalCreateMessage message)
         {
+            var address = this.State.GetNewAddress();
+
             // Create lamba to invoke VM
             VmExecutionResult VmInvoke(ISmartContractState state) => this.Vm.Create(this.State.Repository, message.Method, state, message.Code);
 
-            return ApplyInternal(VmInvoke, message.To);
+            return ApplyInternal(VmInvoke, address, message);
         }
 
         public (VmExecutionResult, GasMeter, uint160 address) Apply(InternalCreateMessage message)
         {
             var address = this.State.GetNewAddress();
 
-            VmExecutionResult VmInvoke(ISmartContractState state) => this.Vm.Create(this.State.Repository, message.Method, state, message.Code);
+            VmExecutionResult VmInvoke(ISmartContractState state) => this.Vm.Create(this.State.Repository, message.Method, state, message.Code, message.Type);
 
-            return this.ApplyInternal(VmInvoke, address);
+            return this.ApplyInternal(VmInvoke, address, message);
         }
 
         public (VmExecutionResult, GasMeter, uint160 address) Apply(CallMessage message)
@@ -262,10 +264,10 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             VmExecutionResult VmInvoke(ISmartContractState state) => this.Vm.ExecuteMethod(this.State.Repository, message.Method, state, message.Code, type);
             
-            return this.ApplyInternal(VmInvoke, message.To);
+            return this.ApplyInternal(VmInvoke, message.To, message);
         }
 
-        public ISmartContractState ContractState(IGasMeter gasMeter, IState state, uint160 address)
+        public ISmartContractState ContractState(IGasMeter gasMeter, IState state, uint160 address, BaseMessage message)
         {
             IPersistenceStrategy persistenceStrategy =
                 new MeteredPersistenceStrategy(state.Repository, gasMeter, new BasicKeyEncodingStrategy());
@@ -276,8 +278,8 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 state.Block,
                 new Message(
                     address.ToAddress(this.Network),
-                    this.Message.From.ToAddress(this.Network),
-                    this.Message.Amount
+                    message.From.ToAddress(this.Network),
+                    message.Amount
                 ),
                 persistentState,
                 gasMeter,
@@ -384,7 +386,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             Transaction internalTransaction = this.transferProcessor.Process(
                 this.stateSnapshot,
-                address, // TODO
+                address,
                 transactionContext,
                 state.InternalTransfers,
                 revert);
