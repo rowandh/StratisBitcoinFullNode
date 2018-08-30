@@ -419,7 +419,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
         }
 
         /// <summary>
-        /// Throws an exception if a contract doesn't have a high enough balance to make this transaction.
+        /// Checks whether a contract has enough funds to make this transaction.
         /// </summary>
         private bool EnsureContractHasEnoughBalance(uint160 contractAddress, ulong amountToTransfer)
         {
