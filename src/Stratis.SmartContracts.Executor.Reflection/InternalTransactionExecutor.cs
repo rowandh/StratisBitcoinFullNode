@@ -10,28 +10,16 @@ namespace Stratis.SmartContracts.Executor.Reflection
     {
         private const ulong DefaultGasLimit = GasPriceList.BaseCost * 2 - 1;
 
-        private readonly IAddressGenerator addressGenerator;
         private readonly ILogger logger;
         private readonly ILoggerFactory loggerFactory;
         private readonly Network network;
-        private readonly ISmartContractVirtualMachine vm;
         private readonly IState state;
-        private readonly InternalTransactionExecutorFactory internalTransactionExecutorFactory;
 
-        public InternalTransactionExecutor(
-            InternalTransactionExecutorFactory internalTransactionExecutorFactory,
-            ISmartContractVirtualMachine vm,
-            IAddressGenerator addressGenerator,
-            ILoggerFactory loggerFactory,
-            Network network,
-            IState state)
+        public InternalTransactionExecutor(ILoggerFactory loggerFactory, Network network, IState state)
         {
-            this.internalTransactionExecutorFactory = internalTransactionExecutorFactory;
             this.loggerFactory = loggerFactory;
             this.logger = loggerFactory.CreateLogger(this.GetType());
             this.network = network;
-            this.vm = vm;
-            this.addressGenerator = addressGenerator;
             this.state = state;
         }
 

@@ -43,7 +43,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
             this.AssemblyLoader = new ContractAssemblyLoader();
             this.ModuleDefinitionReader = new ContractModuleDefinitionReader();
             this.Vm = new ReflectionVirtualMachine(this.Validator, this.LoggerFactory, this.Network, this.AssemblyLoader, this.ModuleDefinitionReader);
-            this.InternalTxExecutorFactory = new InternalTransactionExecutorFactory(this.LoggerFactory, this.Network, this.AddressGenerator, this.Vm);
+            this.InternalTxExecutorFactory = new InternalTransactionExecutorFactory(this.LoggerFactory, this.Network);
         }
     }
 }
