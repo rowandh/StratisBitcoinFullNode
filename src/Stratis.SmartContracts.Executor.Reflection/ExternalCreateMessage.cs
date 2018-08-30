@@ -1,9 +1,18 @@
-﻿namespace Stratis.SmartContracts.Executor.Reflection
+﻿using NBitcoin;
+
+namespace Stratis.SmartContracts.Executor.Reflection
 {
     public class ExternalCreateMessage : BaseMessage
     {
-        public byte[] Code { get; set; }
+        public ExternalCreateMessage(uint160 from, ulong amount, Gas gasLimit, byte[] code, MethodCall methodCall)
+            : base(from, amount, gasLimit)
+        {
+            this.Code = code;
+            this.Method = methodCall;
+        }
 
-        public MethodCall Method { get; set; }
+        public byte[] Code { get; }
+
+        public MethodCall Method { get; }
     }
 }

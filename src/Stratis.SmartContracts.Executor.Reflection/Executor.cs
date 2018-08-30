@@ -70,27 +70,25 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             if (creation)
             {
-                var message = new ExternalCreateMessage
-                {
-                    From = transactionContext.Sender,
-                    Amount = transactionContext.TxOutValue,
-                    Code = callData.ContractExecutionCode,
-                    GasLimit = callData.GasLimit,
-                    Method = new MethodCall(null, callData.MethodParameters) // TODO handle constructor MethodCall name
-                };
+                var message = new ExternalCreateMessage(
+                    transactionContext.Sender,
+                    transactionContext.TxOutValue,
+                    callData.GasLimit,
+                    callData.ContractExecutionCode,
+                    new MethodCall(null, callData.MethodParameters) // TODO handle constructor MethodCall name
+                );
 
                 result = state.Apply(message);
             }
             else
             {
-                var message = new ExternalCallMessage
-                {
-                    To = callData.ContractAddress,
-                    From = transactionContext.Sender,
-                    Amount = transactionContext.TxOutValue,
-                    GasLimit = callData.GasLimit,
-                    Method = new MethodCall(callData.MethodName, callData.MethodParameters),
-                };
+                var message = new ExternalCallMessage(
+                        callData.ContractAddress,
+                        transactionContext.Sender,
+                        transactionContext.TxOutValue,
+                        callData.GasLimit,
+                        new MethodCall(callData.MethodName, callData.MethodParameters)
+                );
 
                 result = state.Apply(message);
             }

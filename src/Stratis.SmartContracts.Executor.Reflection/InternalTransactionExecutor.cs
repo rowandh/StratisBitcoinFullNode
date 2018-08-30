@@ -49,14 +49,13 @@ namespace Stratis.SmartContracts.Executor.Reflection
             if (smartContractState.GasMeter.GasAvailable < gasBudget)
                 throw new InsufficientGasException();
 
-            var message = new InternalCreateMessage
-            {
-                From = smartContractState.Message.ContractAddress.ToUint160(this.network),
-                Amount = amountToTransfer,
-                GasLimit = (Gas) gasBudget,
-                Method = new MethodCall(null, parameters),
-                Type = typeof(T).Name
-            };
+            var message = new InternalCreateMessage(
+                smartContractState.Message.ContractAddress.ToUint160(this.network),
+                amountToTransfer,
+                (Gas) gasBudget,
+                new MethodCall(null, parameters),
+                typeof(T).Name
+            );
 
             var result = this.state.Apply(message);
 
@@ -79,14 +78,13 @@ namespace Stratis.SmartContracts.Executor.Reflection
             // For a method call, send all the gas unless an amount was selected.Should only call trusted methods so re - entrance is less problematic.
             ulong gasBudget = (gasLimit != 0) ? gasLimit : smartContractState.GasMeter.GasAvailable;
 
-            var message = new InternalCallMessage
-            {
-                To = addressTo.ToUint160(this.network),
-                From = smartContractState.Message.ContractAddress.ToUint160(this.network),
-                Amount = amountToTransfer,
-                GasLimit = (Gas) gasBudget,
-                Method = new MethodCall(methodName, parameters)
-            };
+            var message = new InternalCallMessage(
+                addressTo.ToUint160(this.network),
+                smartContractState.Message.ContractAddress.ToUint160(this.network),
+                amountToTransfer,
+                (Gas) gasBudget,
+                new MethodCall(methodName, parameters)
+            );
 
             var result = this.state.Apply(message);
 
@@ -105,13 +103,12 @@ namespace Stratis.SmartContracts.Executor.Reflection
             if (smartContractState.GasMeter.GasAvailable < gasBudget)
                 throw new InsufficientGasException();
 
-            var message = new ContractTransferMessage
-            {
-                To = addressTo.ToUint160(this.network),
-                From = smartContractState.Message.ContractAddress.ToUint160(this.network),
-                Amount = amountToTransfer,
-                GasLimit = (Gas) gasBudget
-            };
+            var message = new ContractTransferMessage(
+                addressTo.ToUint160(this.network),
+                smartContractState.Message.ContractAddress.ToUint160(this.network),
+                amountToTransfer,
+                (Gas) gasBudget
+            );
             
             var result = this.state.Apply(message);
 
