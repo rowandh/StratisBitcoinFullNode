@@ -15,7 +15,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
         private readonly ILoggerFactory loggerFactory;
         private readonly Network network;
         private readonly ISmartContractVirtualMachine vm;
-        private readonly IState baseState;
+        private readonly IState state;
         private readonly InternalTransactionExecutorFactory internalTransactionExecutorFactory;
 
         public InternalTransactionExecutor(
@@ -32,7 +32,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             this.network = network;
             this.vm = vm;
             this.addressGenerator = addressGenerator;
-            this.baseState = state;
+            this.state = state;
         }
 
         ///<inheritdoc />
@@ -58,9 +58,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 Type = typeof(T).Name
             };
 
-            var nestedState = this.baseState.Nest(amountToTransfer);
-
-            var result = nestedState.Apply(message);
+            var result = this.state.Apply(message);
 
             // Update parent gas meter.
             smartContractState.GasMeter.Spend(result.GasConsumed);
@@ -90,9 +88,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 Method = new MethodCall(methodName, parameters)
             };
 
-            var state = this.baseState.Nest(amountToTransfer);
-
-            var result = state.Apply(message);
+            var result = this.state.Apply(message);
 
             return result.TransferResult;
         }
@@ -116,10 +112,8 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 Amount = amountToTransfer,
                 GasLimit = (Gas) gasBudget
             };
-
-            var state = this.baseState.Nest(amountToTransfer);
-
-            var result = state.Apply(message);
+            
+            var result = this.state.Apply(message);
 
             return result.TransferResult;
         }

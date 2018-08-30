@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
 using NBitcoin;
 using Stratis.SmartContracts.Core;
 using Stratis.SmartContracts.Core.Exceptions;
@@ -12,14 +14,21 @@ namespace Stratis.SmartContracts.Executor.Reflection
 {
     public class State : IState
     {
-        private readonly IContractStateRepository parentRepository;
-        private readonly ulong originalNonce;
-        private readonly IState parent;
-
-        private State(IState parent, ulong txAmount)
-            : this(parent.InternalTransactionExecutorFactory, parent.Vm, parent.Repository, parent.Block, parent.Network, txAmount, parent.TransactionHash, parent.AddressGenerator, parent.Nonce)
+        private class StateSnapshot
         {
-            this.parent = parent;
+            public StateSnapshot(IContractLogHolder logHolder,
+                List<TransferInfo> internalTransfers, ulong nonce)
+            {
+                this.Logs = logHolder.GetRawLogs().ToImmutableList();
+                this.InternalTransfers = internalTransfers.ToImmutableList();
+                this.Nonce = nonce;
+            }
+
+            public ImmutableList<RawLog> Logs { get; }
+
+            public ImmutableList<TransferInfo> InternalTransfers { get; }
+
+            public ulong Nonce { get; }
         }
 
         public State(InternalTransactionExecutorFactory internalTransactionExecutorFactory,
@@ -27,13 +36,11 @@ namespace Stratis.SmartContracts.Executor.Reflection
             ulong txAmount,
             uint256 transactionHash, IAddressGenerator addressGenerator, ulong nonce = 0)
         {
-            this.parentRepository = repository;
-            this.Repository = repository.StartTracking();
+            this.Repository = repository;
             this.LogHolder = new ContractLogHolder(network);
             this.InternalTransfers = new List<TransferInfo>();
             this.BalanceState = new BalanceState(this.Repository, txAmount, this.InternalTransfers);
             this.Network = network;
-            this.originalNonce = nonce;
             this.Nonce = nonce;
             this.Block = block;
             this.TransactionHash = transactionHash;
@@ -52,7 +59,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
         public Network Network { get; }
 
-        public IContractStateRepository Repository { get; private set; }
+        public IContractStateRepository Repository { get; }
 
         public IContractLogHolder LogHolder { get; }
 
@@ -77,80 +84,56 @@ namespace Stratis.SmartContracts.Executor.Reflection
         /// <summary>
         /// Reverts the state transition.
         /// </summary>
-        public void Rollback()
+        private void Rollback(StateSnapshot snapshot)
         {
             // Reset the nonce
-            this.Nonce = this.originalNonce;
+            this.Nonce = snapshot.Nonce;
+
+            // Rollback internal transfers
             this.InternalTransfers.Clear();
+            this.InternalTransfers.AddRange(snapshot.InternalTransfers);
+            
+            // Rollback logs
             this.LogHolder.Clear();
-            this.Repository.Rollback();
-
-            // Because Rollback does not actually clear the repository state, we need to assign a new instance
-            // to simulate "clearing" the intermediate state.
-            this.Repository = this.parentRepository.StartTracking();
+            this.LogHolder.AddRawLogs(snapshot.Logs);
         }
 
-        /// <summary>
-        /// Commits the state transition. Updates the parent state if necessary.
-        /// </summary>
-        public void Commit()
+        private StateSnapshot TakeSnapshot()
         {
-            this.Repository.Commit();
-
-            // Update the parent
-            if (this.parent != null)
-            {
-                this.parent.InternalTransfers.AddRange(this.InternalTransfers);
-                this.parent.LogHolder.AddRawLogs(this.LogHolder.GetRawLogs());
-
-                while (this.parent.Nonce < this.Nonce)
-                {
-                    this.parent.GetNonceAndIncrement();
-                }
-            }
+            return new StateSnapshot(this.LogHolder, this.InternalTransfers, this.Nonce);
         }
 
-        public IState Nest(ulong txAmount)
+        public StateTransitionResult Apply(ExternalCreateMessage message)
         {
-            return new State(this, txAmount);
-        }
+            var stateSnapshot = this.TakeSnapshot();
 
-        private (VmExecutionResult, GasMeter, uint160) ApplyInternal(Func<ISmartContractState, VmExecutionResult> vmInvoke, uint160 address, BaseMessage message)
-        {
+            // We can't snapshot the state so we start tracking again
+            var nestedState = this.Repository.StartTracking();
+
+            var address = this.GetNewAddress();
+
             var gasMeter = new GasMeter(message.GasLimit);
 
             gasMeter.Spend((Gas)GasPriceList.BaseCost);
 
-            var contractState = ContractState(gasMeter, address, message);
+            var contractState = ContractState(gasMeter, address, message, nestedState);
 
-            var result = vmInvoke(contractState);
+            var result = this.Vm.Create(nestedState, message.Method, contractState, message.Code);
 
             var revert = result.ExecutionException != null;
 
             if (revert)
             {
-                this.Rollback();
+                this.Rollback(stateSnapshot);
             }
             else
             {
-                this.Commit();
+                nestedState.Commit();
             }
-
-            return (result, gasMeter, address);
-        }
-
-        public StateTransitionResult Apply(ExternalCreateMessage message)
-        {
-            var address = this.GetNewAddress();
-
-            // Create lambda to invoke VM
-            VmExecutionResult VmInvoke(ISmartContractState state) => this.Vm.Create(this.Repository, message.Method, state, message.Code);
-
-            (var result, var gasMeter, var _) = ApplyInternal(VmInvoke, address, message);
 
             return new StateTransitionResult
             {
-                Success = result.ExecutionException != null,
+                Success = revert,
                 GasConsumed = gasMeter.GasConsumed,
                 VmExecutionResult = result,
                 ContractAddress = address,
@@ -166,22 +149,42 @@ namespace Stratis.SmartContracts.Executor.Reflection
             if (!enoughBalance)
                 throw new InsufficientBalanceException();
 
+            var stateSnapshot = this.TakeSnapshot();
+
+            // We can't snapshot the state so we start tracking again
+            var nestedState = this.Repository.StartTracking();
+
             // Get the code using the sender. We are creating an instance of a Type in its assembly.
-            byte[] contractCode = this.Repository.GetCode(message.From);
+            byte[] contractCode = nestedState.GetCode(message.From);
 
             var address = this.GetNewAddress();
+            
+            var gasMeter = new GasMeter(message.GasLimit);
 
-            VmExecutionResult VmInvoke(ISmartContractState state) => this.Vm.Create(this.Repository, message.Method, state, contractCode, message.Type);
+            gasMeter.Spend((Gas)GasPriceList.BaseCost);
 
-            (var result, var gasMeter, var _) = ApplyInternal(VmInvoke, address, message);
+            var contractState = ContractState(gasMeter, address, message, nestedState);
 
-            CreateResult createResult = result.ExecutionException != null
+            var result = this.Vm.Create(nestedState, message.Method, contractState, contractCode, message.Type);
+
+            var revert = result.ExecutionException != null;
+
+            if (revert)
+            {
+                this.Rollback(stateSnapshot);
+            }
+            else
+            {
+                nestedState.Commit();
+            }
+
+            CreateResult createResult = revert
                 ? CreateResult.Failed()
                 : CreateResult.Succeeded(address.ToAddress(this.Network));
 
             return new StateTransitionResult
             {
-                Success = result.ExecutionException != null,
+                Success = revert,
                 GasConsumed = gasMeter.GasConsumed,
                 VmExecutionResult = result,
                 ContractAddress = address,
@@ -213,15 +216,32 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 };
             }
 
-            var type = this.Repository.GetContractType(message.To);
+            var stateSnapshot = this.TakeSnapshot();
 
-            VmExecutionResult VmInvoke(ISmartContractState state) => this.Vm.ExecuteMethod(this.Repository, message.Method, state, contractCode, type);
+            // We can't snapshot the state so we start tracking again
+            var nestedState = this.Repository.StartTracking();
 
-            (var result, var gasMeter, var _) = ApplyInternal(VmInvoke, message.To, message);
+            var type = nestedState.GetContractType(message.To);
 
-            // Only append internal value transfer if the execution was successful.
-            if (result.ExecutionException != null)
+            var gasMeter = new GasMeter(message.GasLimit);
+
+            gasMeter.Spend((Gas)GasPriceList.BaseCost);
+
+            var contractState = ContractState(gasMeter, message.To, message, nestedState);
+
+            var result = this.Vm.ExecuteMethod(nestedState, message.Method, contractState, contractCode, type);
+
+            var revert = result.ExecutionException != null;
+
+            if (revert)
             {
+                this.Rollback(stateSnapshot);
+            }
+            else
+            {
+                nestedState.Commit();
+
+                // Only append internal value transfer if the execution was successful.
                 this.InternalTransfers.Add(new TransferInfo
                 {
                     From = message.From,
@@ -232,7 +252,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             return new StateTransitionResult
             {
-                Success = result.ExecutionException != null,
+                Success = revert,
                 GasConsumed = gasMeter.GasConsumed,
                 VmExecutionResult = result,
                 Kind = StateTransitionKind.Call,
@@ -272,34 +292,14 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 };
             }
 
-            var result = this.Apply(message as CallMessage);
-
-            // Only append internal value transfer if the execution was successful.
-            if (result.VmExecutionResult.ExecutionException != null)
-            {
-                this.InternalTransfers.Add(new TransferInfo
-                {
-                    From = message.From,
-                    To = message.To,
-                    Value = message.Amount
-                });
-            }
-
-            return new StateTransitionResult
-            {
-                Success = result.VmExecutionResult != null,
-                GasConsumed = result.GasConsumed,
-                VmExecutionResult = result.VmExecutionResult,
-                Kind = StateTransitionKind.Call,
-                TransferResult = TransferResult.Transferred(result.VmExecutionResult.Result),
-                ContractAddress = message.To
-            };
+            return this.Apply(message as CallMessage);
         }
 
-        public ISmartContractState ContractState(IGasMeter gasMeter, uint160 address, BaseMessage message)
+        public ISmartContractState ContractState(IGasMeter gasMeter, uint160 address, BaseMessage message,
+            IContractStateRepository repository)
         {
             IPersistenceStrategy persistenceStrategy =
-                new MeteredPersistenceStrategy(this.Repository, gasMeter, new BasicKeyEncodingStrategy());
+                new MeteredPersistenceStrategy(repository, gasMeter, new BasicKeyEncodingStrategy());
 
             var persistentState = new PersistentState(persistenceStrategy, new ContractPrimitiveSerializer(this.Network), address);
 

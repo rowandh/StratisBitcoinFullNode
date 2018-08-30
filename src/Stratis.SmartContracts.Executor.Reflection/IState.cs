@@ -16,11 +16,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
         ISmartContractVirtualMachine Vm { get; }
         IContractStateRepository Repository { get; }
         IContractLogHolder LogHolder { get; }
-        BalanceState BalanceState { get; }
         List<TransferInfo> InternalTransfers { get; }
-        void Rollback();
-        void Commit();
-        IState Nest(ulong txAmount);
         ulong GetNonceAndIncrement();
         uint256 TransactionHash { get; }
         uint160 GetNewAddress();
