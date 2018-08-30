@@ -5,5 +5,6 @@
         StateTransitionResult Apply(ExternalCreateMessage message);
         StateTransitionResult Apply(InternalCreateMessage message);
         StateTransitionResult Apply(CallMessage message);
+        StateTransitionResult Apply(ContractTransferMessage message);
     }
 }
