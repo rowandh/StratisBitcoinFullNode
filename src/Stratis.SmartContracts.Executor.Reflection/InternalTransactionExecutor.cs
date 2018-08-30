@@ -49,9 +49,6 @@ namespace Stratis.SmartContracts.Executor.Reflection
             if (smartContractState.GasMeter.GasAvailable < gasBudget)
                 throw new InsufficientGasException();
 
-            // Check balance.
-            EnsureContractHasEnoughBalance(smartContractState, amountToTransfer);
-
             var message = new InternalCreateMessage
             {
                 From = smartContractState.Message.ContractAddress.ToUint160(this.network),
@@ -82,10 +79,6 @@ namespace Stratis.SmartContracts.Executor.Reflection
             object[] parameters,
             ulong gasLimit = 0)
         {
-            // TODO: Spend BaseFee here
-
-            EnsureContractHasEnoughBalance(smartContractState, amountToTransfer);
-
             // Here, we know contract has code, so we execute it
             // For a method call, send all the gas unless an amount was selected.Should only call trusted methods so re - entrance is less problematic.
             ulong gasBudget = (gasLimit != 0) ? gasLimit : smartContractState.GasMeter.GasAvailable;
@@ -116,10 +109,6 @@ namespace Stratis.SmartContracts.Executor.Reflection
         {
             this.logger.LogTrace("({0}:{1},{2}:{3})", nameof(addressTo), addressTo, nameof(amountToTransfer), amountToTransfer);
 
-            // TODO: Spend BaseFee here
-
-            EnsureContractHasEnoughBalance(smartContractState, amountToTransfer);
-
             // Calling a receive handler:
             ulong gasBudget = DefaultGasLimit; // for Transfer always send limited gas to prevent re-entrance.
 
@@ -145,19 +134,6 @@ namespace Stratis.SmartContracts.Executor.Reflection
             if (result == null) return TransferResult.Empty();
 
             return TransferResult.Transferred(result.Result);
-        }
-
-        /// <summary>
-        /// Throws an exception if a contract doesn't have a high enough balance to make this transaction.
-        /// </summary>
-        private void EnsureContractHasEnoughBalance(ISmartContractState smartContractState, ulong amountToTransfer)
-        {
-            ulong balance = smartContractState.GetBalance();
-            if (balance < amountToTransfer)
-            {
-                this.logger.LogTrace("(-)[INSUFFICIENT_BALANCE]:{0}={1}", nameof(balance), balance);
-                throw new InsufficientBalanceException();
-            }
         }
     }
 }

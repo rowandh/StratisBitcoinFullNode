@@ -1,6 +1,7 @@
 ﻿using System;
 using NBitcoin;
 using Stratis.SmartContracts.Core;
+using Stratis.SmartContracts.Core.Exceptions;
 using Stratis.SmartContracts.Core.State.AccountAbstractionLayer;
 using Stratis.SmartContracts.Executor.Reflection.Serialization;
 
@@ -62,6 +63,11 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
         public (VmExecutionResult, GasMeter, uint160 address) Apply(InternalCreateMessage message)
         {
+            var enoughBalance = EnsureContractHasEnoughBalance(message.From, message.Amount);
+
+            if (!enoughBalance)
+                throw new InsufficientBalanceException();
+
             // Get the code using the sender. We are creating an instance of a Type in its assembly.
             byte[] contractCode = this.State.Repository.GetCode(message.From);
 
@@ -74,6 +80,10 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
         public (VmExecutionResult, GasMeter, uint160 address) Apply(CallMessage message)
         {
+            var enoughBalance = EnsureContractHasEnoughBalance(message.From, message.Amount);
+
+            if (!enoughBalance)
+                throw new InsufficientBalanceException();
 
             byte[] contractCode = this.State.Repository.GetCode(message.To);
 
@@ -105,6 +115,11 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
         public (VmExecutionResult, GasMeter, uint160 address) Apply(ContractTransferMessage message)
         {
+            var enoughBalance = EnsureContractHasEnoughBalance(message.From, message.Amount);
+
+            if (!enoughBalance)
+                throw new InsufficientBalanceException();
+
             // If it's not a contract, create a regular P2PKH tx
             // If it is a contract, do a regular contract call
             byte[] contractCode = this.State.Repository.GetCode(message.To);
@@ -162,6 +177,16 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 () => state.BalanceState.GetBalance(address));
 
             return contractState;
+        }
+
+        /// <summary>
+        /// Throws an exception if a contract doesn't have a high enough balance to make this transaction.
+        /// </summary>
+        private bool EnsureContractHasEnoughBalance(uint160 contractAddress, ulong amountToTransfer)
+        {
+            ulong balance = this.State.BalanceState.GetBalance(contractAddress);
+
+            return balance >= amountToTransfer;
         }
     }
 }
