@@ -162,13 +162,12 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 this.Repository.Commit();
             }
 
-            return new StateTransitionResult
-            {
-                Success = !revert,
-                GasConsumed = gasMeter.GasConsumed,
-                VmExecutionResult = result,
-                ContractAddress = address
-            };
+            return new StateTransitionResult(
+                gasMeter.GasConsumed,
+                address,
+                !revert,
+                result
+            );            
         }
 
         /// <summary>
@@ -200,14 +199,12 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             if (contractCode == null || contractCode.Length == 0)
             {
-                // No contract code at this address
-                return new StateTransitionResult
-                {
-                    Success = false,
-                    GasConsumed = (Gas)0,
-                    ContractAddress = message.To,
-                    VmExecutionResult =  VmExecutionResult.Error(new SmartContractDoesNotExistException("No code"))
-                };
+                return new StateTransitionResult(
+                    (Gas) 0,
+                    message.To,
+                    false,
+                    VmExecutionResult.Error(new SmartContractDoesNotExistException("No code"))
+                );
             }
 
             var stateSnapshot = this.TakeSnapshot();
@@ -233,13 +230,12 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 this.Repository.Commit();
             }
 
-            return new StateTransitionResult
-            {
-                Success = !revert,
-                GasConsumed = gasMeter.GasConsumed,
-                VmExecutionResult = result,
-                ContractAddress = message.To
-            };
+            return new StateTransitionResult(
+                gasMeter.GasConsumed,
+                message.To,
+                !revert,
+                result
+            );            
         }
 
         /// <summary>
@@ -301,12 +297,11 @@ namespace Stratis.SmartContracts.Executor.Reflection
                     Value = message.Amount
                 });
 
-                return new StateTransitionResult
-                {
-                    Success = true,
-                    GasConsumed = (Gas)0,
-                    ContractAddress = message.To
-                };
+                return new StateTransitionResult(
+                    (Gas) 0,
+                    message.To,
+                    true
+                );
             }
 
             return this.ApplyCall(message);

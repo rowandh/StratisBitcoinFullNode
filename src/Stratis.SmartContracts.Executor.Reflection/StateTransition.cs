@@ -2,14 +2,41 @@
 
 namespace Stratis.SmartContracts.Executor.Reflection
 {
+    /// <summary>
+    /// The result of a state transition operation.
+    /// </summary>
     public class StateTransitionResult
     {
-        public VmExecutionResult VmExecutionResult { get; set; }
+        public StateTransitionResult(
+            Gas gasConsumed, 
+            uint160 contractAddress, 
+            bool success,
+            VmExecutionResult vmExecutionResult = null)
+        {
+            this.GasConsumed = gasConsumed;
+            this.ContractAddress = contractAddress;
+            this.Success = success;
+            this.VmExecutionResult = vmExecutionResult;
+        }
 
-        public Gas GasConsumed { get; set; }
+        /// <summary>
+        /// The execution result of the VM, or null if the VM was not invoked.
+        /// </summary>
+        public VmExecutionResult VmExecutionResult { get; }
 
-        public uint160 ContractAddress { get; set; }
+        /// <summary>
+        /// Gas consumed during execution.
+        /// </summary>
+        public Gas GasConsumed { get; }
 
-        public bool Success { get; set; }
+        /// <summary>
+        /// The receiving contract's address.
+        /// </summary>
+        public uint160 ContractAddress { get; }
+
+        /// <summary>
+        /// Whether the operation was successful.
+        /// </summary>
+        public bool Success { get; }
     }
 }
