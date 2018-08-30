@@ -9,8 +9,6 @@ namespace Stratis.SmartContracts.Executor.Reflection
         /// </summary>
         public uint160 To { get; set; }
 
-        public byte[] Code { get; set; }
-
         public MethodCall Method { get; set; }
     }
 }

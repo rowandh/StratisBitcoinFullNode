@@ -92,7 +92,6 @@ namespace Stratis.SmartContracts.Executor.Reflection
                     To = callData.ContractAddress,
                     From = transactionContext.Sender,
                     Amount = transactionContext.TxOutValue,
-                    Code = this.stateSnapshot.GetCode(callData.ContractAddress),
                     GasLimit = callData.GasLimit,
                     Method = new MethodCall(callData.MethodName, callData.MethodParameters),
                 };

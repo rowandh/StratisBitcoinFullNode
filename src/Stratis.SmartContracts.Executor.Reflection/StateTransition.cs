@@ -81,7 +81,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             var type = this.State.Repository.GetContractType(message.To);
 
-            VmExecutionResult VmInvoke(ISmartContractState state) => this.Vm.ExecuteMethod(this.State.Repository, message.Method, state, message.Code, type);
+            VmExecutionResult VmInvoke(ISmartContractState state) => this.Vm.ExecuteMethod(this.State.Repository, message.Method, state, contractCode, type);
             
             var result = this.ApplyInternal(VmInvoke, message.To, message);
 
