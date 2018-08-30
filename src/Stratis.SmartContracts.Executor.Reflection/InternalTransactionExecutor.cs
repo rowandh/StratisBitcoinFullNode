@@ -2,7 +2,6 @@
 using NBitcoin;
 using Stratis.SmartContracts.Core;
 using Stratis.SmartContracts.Core.Exceptions;
-using Stratis.SmartContracts.Core.State.AccountAbstractionLayer;
 
 namespace Stratis.SmartContracts.Executor.Reflection
 {
@@ -53,15 +52,10 @@ namespace Stratis.SmartContracts.Executor.Reflection
             // Check balance.
             EnsureContractHasEnoughBalance(smartContractState, amountToTransfer);
 
-            // Build objects for VM
-            // TODO: Fix this when calling from constructor.
-            byte[] contractCode = this.baseState.Repository.GetCode(smartContractState.Message.ContractAddress.ToUint160(this.network));
-
             var message = new InternalCreateMessage
             {
                 From = smartContractState.Message.ContractAddress.ToUint160(this.network),
                 Amount = amountToTransfer,
-                Code = contractCode,
                 GasLimit = (Gas) gasBudget,
                 Method = new MethodCall(null, parameters),
                 Type = typeof(T).Name

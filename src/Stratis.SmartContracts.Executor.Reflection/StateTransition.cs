@@ -62,15 +62,19 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
         public (VmExecutionResult, GasMeter, uint160 address) Apply(InternalCreateMessage message)
         {
+            // Get the code using the sender. We are creating an instance of a Type in its assembly.
+            byte[] contractCode = this.State.Repository.GetCode(message.From);
+
             var address = this.State.GetNewAddress();
 
-            VmExecutionResult VmInvoke(ISmartContractState state) => this.Vm.Create(this.State.Repository, message.Method, state, message.Code, message.Type);
+            VmExecutionResult VmInvoke(ISmartContractState state) => this.Vm.Create(this.State.Repository, message.Method, state, contractCode, message.Type);
 
             return this.ApplyInternal(VmInvoke, address, message);
         }
 
         public (VmExecutionResult, GasMeter, uint160 address) Apply(CallMessage message)
         {
+
             byte[] contractCode = this.State.Repository.GetCode(message.To);
 
             if (contractCode == null || contractCode.Length == 0)

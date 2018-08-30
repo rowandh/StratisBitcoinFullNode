@@ -2,8 +2,6 @@
 {
     public class InternalCreateMessage : BaseMessage
     {
-        public byte[] Code { get; set; }
-
         /// <summary>
         /// Internal creates need a method call with params and an empty method name.
         /// </summary>
