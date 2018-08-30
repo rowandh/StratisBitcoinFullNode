@@ -145,13 +145,15 @@ namespace Stratis.SmartContracts.Executor.Reflection
             if (this.GasRemaining < message.GasLimit || this.GasRemaining < GasPriceList.BaseCost)
                 throw new InsufficientGasException();
 
-            var address = this.GetNewAddress();
-
             var stateSnapshot = this.TakeSnapshot();
 
             var gasMeter = new GasMeter(message.GasLimit);
 
             gasMeter.Spend((Gas)GasPriceList.BaseCost);
+
+            var address = this.GetNewAddress();
+
+            this.Repository.CreateAccount(address);
 
             var contractState = this.ContractState(gasMeter, address, message, this.Repository);
 
@@ -165,6 +167,9 @@ namespace Stratis.SmartContracts.Executor.Reflection
             }
             else
             {
+                this.Repository.SetCode(address, code);
+                this.Repository.SetContractType(address, result.Type);
+
                 this.Repository.Commit();
                 this.GasRemaining -= gasMeter.GasConsumed;
             }

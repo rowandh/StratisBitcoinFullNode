@@ -88,9 +88,6 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             //LogExecutionContext(this.logger, contract.State.Block, contract.State.Message, contract.Address, methodCall);
 
-            // Create an account for the contract in the state repository.
-            repository.CreateAccount(contract.Address);
-
             // Invoke the constructor of the provided contract code
             IContractInvocationResult invocationResult = contract.InvokeConstructor(methodCall.Parameters);
 
@@ -103,11 +100,8 @@ namespace Stratis.SmartContracts.Executor.Reflection
             this.logger.LogTrace("[CREATE_CONTRACT_INSTANTIATION_SUCCEEDED]");
             
             this.logger.LogTrace("(-):{0}={1}", nameof(contract.Address), contract.Address);
-
-            repository.SetCode(contract.Address, contractCode);
-            repository.SetContractType(contract.Address, contract.Type.Name);
-
-            return VmExecutionResult.Success(invocationResult.Return);
+            
+            return VmExecutionResult.Success(invocationResult.Return, typeToInstantiate);
         }
 
         /// <summary>
@@ -173,7 +167,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             this.logger.LogTrace("(-)");
 
-            return VmExecutionResult.Success(invocationResult.Return);
+            return VmExecutionResult.Success(invocationResult.Return, typeName);
         }
 
         /// <summary>

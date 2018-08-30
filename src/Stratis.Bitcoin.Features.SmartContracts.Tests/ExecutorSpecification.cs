@@ -44,8 +44,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
 
             var contractPrimitiveSerializer = new Mock<IContractPrimitiveSerializer>();
 
-            var vmExecutionResult =
-                VmExecutionResult.Success(null);
+            var vmExecutionResult = VmExecutionResult.Success(null, null);
 
             var state = new Mock<IContractStateRepository>();
             var transferProcessor = new Mock<ISmartContractResultTransferProcessor>();
