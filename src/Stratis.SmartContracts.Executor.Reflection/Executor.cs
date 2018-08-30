@@ -72,8 +72,8 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 this.network,
                 transactionContext.TxOutValue,
                 transactionContext.TransactionHash,
-                this.addressGenerator
-            );
+                this.addressGenerator,
+                callData.GasLimit);
 
             StateTransitionResult result;
 

@@ -33,10 +33,6 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             ulong gasBudget = (gasLimit != 0) ? gasLimit : smartContractState.GasMeter.GasAvailable;
 
-            // Ensure we have enough gas left to be able to fund the new GasMeter.
-            if (smartContractState.GasMeter.GasAvailable < gasBudget)
-                throw new InsufficientGasException();
-
             var message = new InternalCreateMessage(
                 smartContractState.Message.ContractAddress.ToUint160(this.network),
                 amountToTransfer,
@@ -46,9 +42,6 @@ namespace Stratis.SmartContracts.Executor.Reflection
             );
 
             var result = this.state.Apply(message);
-
-            // Update parent gas meter.
-            smartContractState.GasMeter.Spend(result.GasConsumed);
 
             return result.Success
                 ? CreateResult.Succeeded(result.ContractAddress.ToAddress(this.network))
@@ -90,11 +83,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             // Calling a receive handler:
             ulong gasBudget = DefaultGasLimit; // for Transfer always send limited gas to prevent re-entrance.
-
-            // Ensure we have enough gas left to be able to fund the new GasMeter.
-            if (smartContractState.GasMeter.GasAvailable < gasBudget)
-                throw new InsufficientGasException();
-
+           
             var message = new ContractTransferMessage(
                 addressTo.ToUint160(this.network),
                 smartContractState.Message.ContractAddress.ToUint160(this.network),

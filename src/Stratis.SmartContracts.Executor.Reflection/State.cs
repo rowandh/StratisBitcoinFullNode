@@ -51,15 +51,15 @@ namespace Stratis.SmartContracts.Executor.Reflection
             public ulong Nonce { get; }
         }
 
-        public State(
-            InternalTransactionExecutorFactory internalTransactionExecutorFactory,
+        public State(InternalTransactionExecutorFactory internalTransactionExecutorFactory,
             ISmartContractVirtualMachine vm,
             IContractStateRepository repository,
             IBlock block,
             Network network,
             ulong txAmount,
             uint256 transactionHash,
-            IAddressGenerator addressGenerator)
+            IAddressGenerator addressGenerator,
+            Gas gasLimit)
         {
             this.Repository = repository;
             this.LogHolder = new ContractLogHolder(network);
@@ -72,7 +72,10 @@ namespace Stratis.SmartContracts.Executor.Reflection
             this.AddressGenerator = addressGenerator;
             this.InternalTransactionExecutorFactory = internalTransactionExecutorFactory;
             this.Vm = vm;
+            this.GasRemaining = gasLimit;
         }
+
+        public Gas GasRemaining { get; private set; }
 
         public IAddressGenerator AddressGenerator { get; }
 
@@ -139,6 +142,9 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
         private StateTransitionResult ApplyCreate(MethodCall method, byte[] code, BaseMessage message, string type = null)
         {
+            if (this.GasRemaining < message.GasLimit || this.GasRemaining < GasPriceList.BaseCost)
+                throw new InsufficientGasException();
+
             var address = this.GetNewAddress();
 
             var stateSnapshot = this.TakeSnapshot();
@@ -160,6 +166,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             else
             {
                 this.Repository.Commit();
+                this.GasRemaining -= gasMeter.GasConsumed;
             }
 
             return new StateTransitionResult(
@@ -207,6 +214,9 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 );
             }
 
+            if (this.GasRemaining < message.GasLimit || this.GasRemaining < GasPriceList.BaseCost)
+                throw new InsufficientGasException();
+
             var stateSnapshot = this.TakeSnapshot();
 
             var type = this.Repository.GetContractType(message.To);
@@ -228,6 +238,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             else
             {                
                 this.Repository.Commit();
+                this.GasRemaining -= gasMeter.GasConsumed;
             }
 
             return new StateTransitionResult(
