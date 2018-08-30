@@ -338,7 +338,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 };
             }
 
-            return this.Apply(message as ExternalCallMessage);
+            return this.Apply(message as InternalCallMessage);
         }
 
         public ISmartContractState ContractState(IGasMeter gasMeter, uint160 address, BaseMessage message,
