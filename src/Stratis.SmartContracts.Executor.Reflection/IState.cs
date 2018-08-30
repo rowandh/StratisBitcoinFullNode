@@ -1,24 +1,11 @@
-﻿using System.Collections.Generic;
-using NBitcoin;
-using Stratis.SmartContracts.Core.State;
-using Stratis.SmartContracts.Core.State.AccountAbstractionLayer;
-using Stratis.SmartContracts.Executor.Reflection.ContractLogging;
-
-namespace Stratis.SmartContracts.Executor.Reflection
+﻿namespace Stratis.SmartContracts.Executor.Reflection
 {
-    public interface IState : IStateTransition
+    public interface IState
     {
-        IBlock Block { get; }
-        ulong Nonce { get; }
-        Network Network { get; }
-        IAddressGenerator AddressGenerator { get; }
-        InternalTransactionExecutorFactory InternalTransactionExecutorFactory { get; }
-        ISmartContractVirtualMachine Vm { get; }
-        IContractStateRepository Repository { get; }
-        IContractLogHolder LogHolder { get; }
-        List<TransferInfo> InternalTransfers { get; }
-        ulong GetNonceAndIncrement();
-        uint256 TransactionHash { get; }
-        uint160 GetNewAddress();
+        StateTransitionResult Apply(ExternalCreateMessage message);
+        StateTransitionResult Apply(InternalCreateMessage message);
+        StateTransitionResult Apply(ExternalCallMessage message);
+        StateTransitionResult Apply(InternalCallMessage message);
+        StateTransitionResult Apply(ContractTransferMessage message);
     }
 }

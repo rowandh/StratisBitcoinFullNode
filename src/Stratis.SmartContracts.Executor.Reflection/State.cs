@@ -91,7 +91,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
         public ISmartContractVirtualMachine Vm { get; }
 
-        public ulong GetNonceAndIncrement()
+        private ulong GetNonceAndIncrement()
         {
             return this.Nonce++;
         }
@@ -99,7 +99,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
         /// <summary>
         /// Returns a new contract address and increments the address generation nonce.
         /// </summary>
-        public uint160 GetNewAddress()
+        private uint160 GetNewAddress()
         {
             return this.AddressGenerator.GenerateAddress(this.TransactionHash, this.GetNonceAndIncrement());
         }
