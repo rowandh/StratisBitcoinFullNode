@@ -66,7 +66,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             var state = new State(this.stateSnapshot, block, this.network, transactionContext.TxOutValue, transactionContext.TransactionHash, this.addressGenerator);
 
-            var stateTransition = new StateTransition(this.internalTransactionExecutorFactory, state, this.vm, this.network, null);
+            var stateTransition = new StateTransition(this.internalTransactionExecutorFactory, state, this.vm, this.network);
 
             VmExecutionResult result;
             IGasMeter gasMeter;

@@ -54,7 +54,8 @@ namespace Stratis.SmartContracts.Executor.Reflection
             EnsureContractHasEnoughBalance(smartContractState, amountToTransfer);
 
             // Build objects for VM
-            byte[] contractCode = this.baseState.Repository.GetCode(smartContractState.Message.ContractAddress.ToUint160(this.network)); // TODO: Fix this when calling from constructor.
+            // TODO: Fix this when calling from constructor.
+            byte[] contractCode = this.baseState.Repository.GetCode(smartContractState.Message.ContractAddress.ToUint160(this.network));
 
             var message = new InternalCreateMessage
             {
@@ -68,7 +69,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             var nestedState = this.baseState.Nest(amountToTransfer);
 
-            var stateTransition = new StateTransition(this.internalTransactionExecutorFactory, nestedState, this.vm, this.network, message);
+            var stateTransition = new StateTransition(this.internalTransactionExecutorFactory, nestedState, this.vm, this.network);
 
             (var result, var nestedGasMeter, var address) = stateTransition.Apply(message);
 
@@ -118,7 +119,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             var state = this.baseState.Nest(amountToTransfer);
 
-            var stateTransition = new StateTransition(this.internalTransactionExecutorFactory, state, this.vm, this.network, message);
+            var stateTransition = new StateTransition(this.internalTransactionExecutorFactory, state, this.vm, this.network);
 
             (var result, var _, uint160 _) = stateTransition.Apply(message);
 
@@ -181,7 +182,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             var state = this.baseState.Nest(amountToTransfer);
 
-            var stateTransition = new StateTransition(this.internalTransactionExecutorFactory, state, this.vm, this.network, message);
+            var stateTransition = new StateTransition(this.internalTransactionExecutorFactory, state, this.vm, this.network);
 
             (var result, var _, uint160 _) = stateTransition.Apply(message);
 

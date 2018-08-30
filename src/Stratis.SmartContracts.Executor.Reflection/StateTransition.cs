@@ -7,21 +7,17 @@ namespace Stratis.SmartContracts.Executor.Reflection
 {
     public class StateTransition : IStateTransition
     {
-        public StateTransition(
-            InternalTransactionExecutorFactory internalTransactionExecutorFactory, 
+        public StateTransition(InternalTransactionExecutorFactory internalTransactionExecutorFactory,
             IState state,
-            ISmartContractVirtualMachine vm, Network network, BaseMessage message)
+            ISmartContractVirtualMachine vm, Network network)
         {
             this.InternalTransactionExecutorFactory = internalTransactionExecutorFactory;
             this.State = state;
             this.Vm = vm;
             this.Network = network;
-            this.Message = message;
         }
 
         public InternalTransactionExecutorFactory InternalTransactionExecutorFactory { get; }
-
-        public BaseMessage Message { get; }
 
         public IState State { get; }
 
