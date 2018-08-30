@@ -17,7 +17,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
     {
         private readonly ILogger logger;
         private readonly IContractPrimitiveSerializer contractPrimitiveSerializer;
-        private readonly IContractStateRepository stateSnapshot;
+        private readonly IContractStateRepository repository;
         private readonly ISmartContractResultRefundProcessor refundProcessor;
         private readonly ISmartContractResultTransferProcessor transferProcessor;
         private readonly ISmartContractVirtualMachine vm;
@@ -29,7 +29,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
         public Executor(ILoggerFactory loggerFactory,
             IContractPrimitiveSerializer contractPrimitiveSerializer,
             ICallDataSerializer serializer,
-            IContractStateRepository stateSnapshot,
+            IContractStateRepository repository,
             ISmartContractResultRefundProcessor refundProcessor,
             ISmartContractResultTransferProcessor transferProcessor,
             ISmartContractVirtualMachine vm,
@@ -39,7 +39,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
         {
             this.logger = loggerFactory.CreateLogger(this.GetType());
             this.contractPrimitiveSerializer = contractPrimitiveSerializer;
-            this.stateSnapshot = stateSnapshot;
+            this.repository = repository;
             this.refundProcessor = refundProcessor;
             this.transferProcessor = transferProcessor;
             this.vm = vm;
@@ -64,7 +64,16 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 transactionContext.CoinbaseAddress.ToAddress(this.network)
             );
 
-            var state = new State(this.internalTransactionExecutorFactory, this.vm, this.stateSnapshot, block, this.network, transactionContext.TxOutValue, transactionContext.TransactionHash, this.addressGenerator);
+            var state = new State(
+                this.internalTransactionExecutorFactory,
+                this.vm,
+                this.repository,
+                block, 
+                this.network,
+                transactionContext.TxOutValue,
+                transactionContext.TransactionHash,
+                this.addressGenerator
+            );
 
             StateTransitionResult result;
 
@@ -96,7 +105,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             var revert = !result.Success;
 
             Transaction internalTransaction = this.transferProcessor.Process(
-                this.stateSnapshot,
+                this.repository,
                 result.ContractAddress,
                 transactionContext,
                 state.InternalTransfers,

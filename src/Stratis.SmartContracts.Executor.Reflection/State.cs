@@ -14,8 +14,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
     {
         private class StateSnapshot
         {
-            public StateSnapshot(IContractLogHolder logHolder,
-                List<TransferInfo> internalTransfers, ulong nonce, byte[] root)
+            public StateSnapshot(IContractLogHolder logHolder, List<TransferInfo> internalTransfers, ulong nonce, byte[] root)
             {
                 this.Logs = logHolder.GetRawLogs().ToImmutableList();
                 this.InternalTransfers = internalTransfers.ToImmutableList();
@@ -32,17 +31,22 @@ namespace Stratis.SmartContracts.Executor.Reflection
             public ulong Nonce { get; }
         }
 
-        public State(InternalTransactionExecutorFactory internalTransactionExecutorFactory,
-            ISmartContractVirtualMachine vm, IContractStateRepository repository, IBlock block, Network network,
+        public State(
+            InternalTransactionExecutorFactory internalTransactionExecutorFactory,
+            ISmartContractVirtualMachine vm,
+            IContractStateRepository repository,
+            IBlock block,
+            Network network,
             ulong txAmount,
-            uint256 transactionHash, IAddressGenerator addressGenerator, ulong nonce = 0)
+            uint256 transactionHash,
+            IAddressGenerator addressGenerator)
         {
             this.Repository = repository;
             this.LogHolder = new ContractLogHolder(network);
             this.InternalTransfers = new List<TransferInfo>();
             this.BalanceState = new BalanceState(this.Repository, txAmount, this.InternalTransfers);
             this.Network = network;
-            this.Nonce = nonce;
+            this.Nonce = 0;
             this.Block = block;
             this.TransactionHash = transactionHash;
             this.AddressGenerator = addressGenerator;
@@ -88,6 +92,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
         private void Rollback(StateSnapshot snapshot)
         {
             ((ContractStateRepositoryRoot) this.Repository).SyncToRoot(snapshot.Root);
+
             // Reset the nonce
             this.Nonce = snapshot.Nonce;
 
@@ -344,8 +349,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
         public ISmartContractState ContractState(IGasMeter gasMeter, uint160 address, BaseMessage message,
             IContractStateRepository repository)
         {
-            IPersistenceStrategy persistenceStrategy =
-                new MeteredPersistenceStrategy(repository, gasMeter, new BasicKeyEncodingStrategy());
+            IPersistenceStrategy persistenceStrategy = new MeteredPersistenceStrategy(repository, gasMeter, new BasicKeyEncodingStrategy());
 
             var persistentState = new PersistentState(persistenceStrategy, new ContractPrimitiveSerializer(this.Network), address);
 
