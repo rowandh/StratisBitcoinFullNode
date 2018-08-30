@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using NBitcoin;
 using Stratis.SmartContracts.Core;
@@ -6,6 +7,7 @@ using Stratis.SmartContracts.Core.Exceptions;
 using Stratis.SmartContracts.Core.State;
 using Stratis.SmartContracts.Core.State.AccountAbstractionLayer;
 using Stratis.SmartContracts.Executor.Reflection.ContractLogging;
+using Stratis.SmartContracts.Executor.Reflection.Exceptions;
 using Stratis.SmartContracts.Executor.Reflection.Serialization;
 
 namespace Stratis.SmartContracts.Executor.Reflection
@@ -135,14 +137,11 @@ namespace Stratis.SmartContracts.Executor.Reflection
             return new StateSnapshot(this.LogHolder, this.InternalTransfers, this.Nonce, root);
         }
 
-        /// <summary>
-        /// Applies an externally generated contract creation message to the current state.
-        /// </summary>
-        public StateTransitionResult Apply(ExternalCreateMessage message)
+        private StateTransitionResult ApplyCreate(MethodCall method, byte[] code, BaseMessage message, string type = null)
         {
-            var stateSnapshot = this.TakeSnapshot();
-
             var address = this.GetNewAddress();
+
+            var stateSnapshot = this.TakeSnapshot();
 
             var gasMeter = new GasMeter(message.GasLimit);
 
@@ -150,7 +149,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             var contractState = this.ContractState(gasMeter, address, message, this.Repository);
 
-            var result = this.Vm.Create(this.Repository, message.Method, contractState, message.Code);
+            var result = this.Vm.Create(this.Repository, method, contractState, code, type);
 
             var revert = result.ExecutionException != null;
 
@@ -161,60 +160,6 @@ namespace Stratis.SmartContracts.Executor.Reflection
             else
             {
                 this.Repository.Commit();
-            }
-
-            return new StateTransitionResult
-            {
-                Success = !revert,
-                GasConsumed = gasMeter.GasConsumed,
-                VmExecutionResult = result,
-                ContractAddress = address,
-                Kind = StateTransitionKind.Create,
-                TransferResult = null
-            };
-        }
-
-        /// <summary>
-        /// Applies an internally generated contract creation message to the current state.
-        /// </summary>
-        public StateTransitionResult Apply(InternalCreateMessage message)
-        {
-            var enoughBalance = this.EnsureContractHasEnoughBalance(message.From, message.Amount);
-
-            if (!enoughBalance)
-                throw new InsufficientBalanceException();
-
-            var stateSnapshot = this.TakeSnapshot();
-
-            // Get the code using the sender. We are creating an instance of a Type in its assembly.
-            byte[] contractCode = this.Repository.GetCode(message.From);
-
-            var address = this.GetNewAddress();
-            
-            var gasMeter = new GasMeter(message.GasLimit);
-
-            gasMeter.Spend((Gas)GasPriceList.BaseCost);
-
-            var contractState = this.ContractState(gasMeter, address, message, this.Repository);
-
-            var result = this.Vm.Create(this.Repository, message.Method, contractState, contractCode, message.Type);
-
-            var revert = result.ExecutionException != null;
-
-            if (revert)
-            {
-                this.Rollback(stateSnapshot);
-            }
-            else
-            {
-                this.Repository.Commit();
-
-                this.InternalTransfers.Add(new TransferInfo
-                {
-                    From = message.From,
-                    To = address,
-                    Value = message.Amount
-                });
             }
 
             CreateResult createResult = revert
@@ -234,15 +179,30 @@ namespace Stratis.SmartContracts.Executor.Reflection
         }
 
         /// <summary>
-        /// Applies an internally generated contract method call message to the current state.
+        /// Applies an externally generated contract creation message to the current state.
         /// </summary>
-        public StateTransitionResult Apply(InternalCallMessage message)
+        public StateTransitionResult Apply(ExternalCreateMessage message)
+        {
+            return this.ApplyCreate(message.Method, message.Code, message);
+        }
+
+        /// <summary>
+        /// Applies an internally generated contract creation message to the current state.
+        /// </summary>
+        public StateTransitionResult Apply(InternalCreateMessage message)
         {
             var enoughBalance = this.EnsureContractHasEnoughBalance(message.From, message.Amount);
 
             if (!enoughBalance)
                 throw new InsufficientBalanceException();
 
+            byte[] contractCode = this.Repository.GetCode(message.From);
+
+            return this.ApplyCreate(message.Method, contractCode, message, message.Type);
+        }
+
+        private StateTransitionResult ApplyCall(CallMessage message)
+        {
             byte[] contractCode = this.Repository.GetCode(message.To);
 
             if (contractCode == null || contractCode.Length == 0)
@@ -254,7 +214,8 @@ namespace Stratis.SmartContracts.Executor.Reflection
                     GasConsumed = (Gas)0,
                     Kind = StateTransitionKind.None,
                     TransferResult = TransferResult.Empty(),
-                    ContractAddress = message.To
+                    ContractAddress = message.To,
+                    VmExecutionResult =  VmExecutionResult.Error(new SmartContractDoesNotExistException("No code"))
                 };
             }
 
@@ -277,16 +238,8 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 this.Rollback(stateSnapshot);
             }
             else
-            {
+            {                
                 this.Repository.Commit();
-
-                // Only append internal value transfer if the execution was successful.
-                this.InternalTransfers.Add(new TransferInfo
-                {
-                    From = message.From,
-                    To = message.To,
-                    Value = message.Amount
-                });
             }
 
             return new StateTransitionResult
@@ -301,58 +254,38 @@ namespace Stratis.SmartContracts.Executor.Reflection
         }
 
         /// <summary>
+        /// Applies an internally generated contract method call message to the current state.
+        /// </summary>
+        public StateTransitionResult Apply(InternalCallMessage message)
+        {
+            var enoughBalance = this.EnsureContractHasEnoughBalance(message.From, message.Amount);
+
+            if (!enoughBalance)
+                throw new InsufficientBalanceException();
+
+            var result = this.ApplyCall(message);
+
+            // For successful internal calls we need to add the transfer to the internal transfer list.
+            // For external calls we do not need to do this.
+            if (result.Success)
+            {
+                this.InternalTransfers.Add(new TransferInfo
+                {
+                    From = message.From,
+                    To = message.To,
+                    Value = message.Amount
+                });
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Applies an externally generated contract method call message to the current state.
         /// </summary>
         public StateTransitionResult Apply(ExternalCallMessage message)
         {
-            byte[] contractCode = this.Repository.GetCode(message.To);
-
-            if (contractCode == null || contractCode.Length == 0)
-            {
-                // No contract code at this address
-                return new StateTransitionResult
-                {
-                    Success = false,
-                    GasConsumed = (Gas)0,
-                    Kind = StateTransitionKind.None,
-                    TransferResult = TransferResult.Empty(),
-                    ContractAddress = message.To
-                };
-            }
-
-            var stateSnapshot = this.TakeSnapshot();
-
-            var type = this.Repository.GetContractType(message.To);
-
-            var gasMeter = new GasMeter(message.GasLimit);
-
-            gasMeter.Spend((Gas)GasPriceList.BaseCost);
-
-            var contractState = this.ContractState(gasMeter, message.To, message, this.Repository);
-
-            var result = this.Vm.ExecuteMethod(this.Repository, message.Method, contractState, contractCode, type);
-
-            var revert = result.ExecutionException != null;
-
-            if (revert)
-            {
-                this.Rollback(stateSnapshot);
-            }
-            else
-            {
-                // External call, so we don't need to add the transfer
-                this.Repository.Commit();
-            }
-
-            return new StateTransitionResult
-            {
-                Success = !revert,
-                GasConsumed = gasMeter.GasConsumed,
-                VmExecutionResult = result,
-                Kind = StateTransitionKind.Call,
-                TransferResult = TransferResult.Transferred(result.Result),
-                ContractAddress = message.To
-            };
+            return this.ApplyCall(message);
         }
 
         /// <summary>
@@ -389,7 +322,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 };
             }
 
-            return this.Apply(message as InternalCallMessage);
+            return this.ApplyCall(message);
         }
 
         /// <summary>
