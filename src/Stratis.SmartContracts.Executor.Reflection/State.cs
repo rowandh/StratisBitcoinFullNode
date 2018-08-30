@@ -248,7 +248,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 GasConsumed = gasMeter.GasConsumed,
                 VmExecutionResult = result,
                 Kind = StateTransitionKind.Call,
-                TransferResult = TransferResult.Transferred(result.Result),
+                TransferResult = revert ? TransferResult.Failed(result.ExecutionException) : TransferResult.Transferred(result.Result),
                 ContractAddress = message.To
             };
         }
