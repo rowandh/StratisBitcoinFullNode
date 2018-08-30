@@ -27,6 +27,9 @@ namespace Stratis.SmartContracts.Executor.Reflection
     /// </summary>
     public class State : IState
     {
+        /// <summary>
+        /// A snapshot of the world state during a contract execution.
+        /// </summary>
         private class StateSnapshot
         {
             public StateSnapshot(IContractLogHolder logHolder, List<TransferInfo> internalTransfers, ulong nonce, byte[] root)
