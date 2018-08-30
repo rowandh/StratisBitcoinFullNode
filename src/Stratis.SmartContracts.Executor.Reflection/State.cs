@@ -194,7 +194,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             };
         }
 
-        public StateTransitionResult Apply(CallMessage message)
+        public StateTransitionResult Apply(InternalCallMessage message)
         {
             var enoughBalance = EnsureContractHasEnoughBalance(message.From, message.Amount);
 
@@ -261,6 +261,61 @@ namespace Stratis.SmartContracts.Executor.Reflection
             };
         }
 
+        public StateTransitionResult Apply(ExternalCallMessage message)
+        {
+            byte[] contractCode = this.Repository.GetCode(message.To);
+
+            if (contractCode == null || contractCode.Length == 0)
+            {
+                // No contract code at this address
+                return new StateTransitionResult
+                {
+                    Success = false,
+                    GasConsumed = (Gas)0,
+                    Kind = StateTransitionKind.None,
+                    TransferResult = TransferResult.Empty(),
+                    ContractAddress = message.To
+                };
+            }
+
+            var stateSnapshot = this.TakeSnapshot();
+
+            // We can't snapshot the state so we start tracking again
+            var nestedState = this.Repository.StartTracking();
+
+            var type = nestedState.GetContractType(message.To);
+
+            var gasMeter = new GasMeter(message.GasLimit);
+
+            gasMeter.Spend((Gas)GasPriceList.BaseCost);
+
+            var contractState = ContractState(gasMeter, message.To, message, nestedState);
+
+            var result = this.Vm.ExecuteMethod(nestedState, message.Method, contractState, contractCode, type);
+
+            var revert = result.ExecutionException != null;
+
+            if (revert)
+            {
+                this.Rollback(stateSnapshot);
+            }
+            else
+            {
+                // External call, so we don't need to add the transfer
+                nestedState.Commit();
+            }
+
+            return new StateTransitionResult
+            {
+                Success = !revert,
+                GasConsumed = gasMeter.GasConsumed,
+                VmExecutionResult = result,
+                Kind = StateTransitionKind.Call,
+                TransferResult = TransferResult.Transferred(result.Result),
+                ContractAddress = message.To
+            };
+        }
+
         public StateTransitionResult Apply(ContractTransferMessage message)
         {
             var enoughBalance = EnsureContractHasEnoughBalance(message.From, message.Amount);
@@ -292,7 +347,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 };
             }
 
-            return this.Apply(message as CallMessage);
+            return this.Apply(message as ExternalCallMessage);
         }
 
         public ISmartContractState ContractState(IGasMeter gasMeter, uint160 address, BaseMessage message,

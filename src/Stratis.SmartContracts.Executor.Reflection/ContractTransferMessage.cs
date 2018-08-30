@@ -1,6 +1,6 @@
 ﻿namespace Stratis.SmartContracts.Executor.Reflection
 {
-    public class ContractTransferMessage : CallMessage
+    public class ContractTransferMessage : ExternalCallMessage
     {
         public ContractTransferMessage()
         {

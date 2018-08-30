@@ -83,7 +83,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             }
             else
             {
-                var message = new CallMessage
+                var message = new ExternalCallMessage
                 {
                     To = callData.ContractAddress,
                     From = transactionContext.Sender,

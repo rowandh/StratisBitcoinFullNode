@@ -2,7 +2,7 @@
 
 namespace Stratis.SmartContracts.Executor.Reflection
 {
-    public class CallMessage : BaseMessage
+    public class ExternalCallMessage : BaseMessage
     {
         /// <summary>
         /// All transfers have a destination.

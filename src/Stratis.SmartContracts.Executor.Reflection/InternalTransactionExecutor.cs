@@ -78,8 +78,8 @@ namespace Stratis.SmartContracts.Executor.Reflection
             // Here, we know contract has code, so we execute it
             // For a method call, send all the gas unless an amount was selected.Should only call trusted methods so re - entrance is less problematic.
             ulong gasBudget = (gasLimit != 0) ? gasLimit : smartContractState.GasMeter.GasAvailable;
-            
-            var message = new CallMessage
+
+            var message = new InternalCallMessage
             {
                 To = addressTo.ToUint160(this.network),
                 From = smartContractState.Message.ContractAddress.ToUint160(this.network),

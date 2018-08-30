@@ -4,7 +4,8 @@
     {
         StateTransitionResult Apply(ExternalCreateMessage message);
         StateTransitionResult Apply(InternalCreateMessage message);
-        StateTransitionResult Apply(CallMessage message);
+        StateTransitionResult Apply(ExternalCallMessage message);
+        StateTransitionResult Apply(InternalCallMessage message);
         StateTransitionResult Apply(ContractTransferMessage message);
     }
 }
