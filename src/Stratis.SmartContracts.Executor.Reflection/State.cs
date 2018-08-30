@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using NBitcoin;
 using Stratis.SmartContracts.Core;
 using Stratis.SmartContracts.Core.Exceptions;
@@ -118,7 +116,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             gasMeter.Spend((Gas)GasPriceList.BaseCost);
 
-            var contractState = ContractState(gasMeter, address, message, this.Repository);
+            var contractState = this.ContractState(gasMeter, address, message, this.Repository);
 
             var result = this.Vm.Create(this.Repository, message.Method, contractState, message.Code);
 
@@ -146,7 +144,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
         public StateTransitionResult Apply(InternalCreateMessage message)
         {
-            var enoughBalance = EnsureContractHasEnoughBalance(message.From, message.Amount);
+            var enoughBalance = this.EnsureContractHasEnoughBalance(message.From, message.Amount);
 
             if (!enoughBalance)
                 throw new InsufficientBalanceException();
@@ -162,7 +160,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             gasMeter.Spend((Gas)GasPriceList.BaseCost);
 
-            var contractState = ContractState(gasMeter, address, message, this.Repository);
+            var contractState = this.ContractState(gasMeter, address, message, this.Repository);
 
             var result = this.Vm.Create(this.Repository, message.Method, contractState, contractCode, message.Type);
 
@@ -195,7 +193,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
         public StateTransitionResult Apply(InternalCallMessage message)
         {
-            var enoughBalance = EnsureContractHasEnoughBalance(message.From, message.Amount);
+            var enoughBalance = this.EnsureContractHasEnoughBalance(message.From, message.Amount);
 
             if (!enoughBalance)
                 throw new InsufficientBalanceException();
@@ -223,7 +221,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             gasMeter.Spend((Gas)GasPriceList.BaseCost);
 
-            var contractState = ContractState(gasMeter, message.To, message, this.Repository);
+            var contractState = this.ContractState(gasMeter, message.To, message, this.Repository);
 
             var result = this.Vm.ExecuteMethod(this.Repository, message.Method, contractState, contractCode, type);
 
@@ -282,7 +280,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             gasMeter.Spend((Gas)GasPriceList.BaseCost);
 
-            var contractState = ContractState(gasMeter, message.To, message, this.Repository);
+            var contractState = this.ContractState(gasMeter, message.To, message, this.Repository);
 
             var result = this.Vm.ExecuteMethod(this.Repository, message.Method, contractState, contractCode, type);
 
@@ -311,7 +309,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
         public StateTransitionResult Apply(ContractTransferMessage message)
         {
-            var enoughBalance = EnsureContractHasEnoughBalance(message.From, message.Amount);
+            var enoughBalance = this.EnsureContractHasEnoughBalance(message.From, message.Amount);
 
             if (!enoughBalance)
                 throw new InsufficientBalanceException();
