@@ -92,30 +92,18 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             EnsureContractHasEnoughBalance(smartContractState, amountToTransfer);
 
-            byte[] contractCode = this.baseState.Repository.GetCode(addressTo.ToUint160(this.network));
-
-            if (contractCode == null || contractCode.Length == 0)
-            {
-                return TransferResult.Empty();
-            }
-
             // Here, we know contract has code, so we execute it
             // For a method call, send all the gas unless an amount was selected.Should only call trusted methods so re - entrance is less problematic.
             ulong gasBudget = (gasLimit != 0) ? gasLimit : smartContractState.GasMeter.GasAvailable;
-
+            
             var message = new CallMessage
             {
                 To = addressTo.ToUint160(this.network),
                 From = smartContractState.Message.ContractAddress.ToUint160(this.network),
                 Amount = amountToTransfer,
-                Code = contractCode,
                 GasLimit = (Gas) gasBudget,
                 Method = new MethodCall(methodName, parameters)
             };
-
-            // Ensure we have enough gas left to be able to fund the new GasMeter.
-            if (smartContractState.GasMeter.GasAvailable < message.GasLimit)
-                throw new InsufficientGasException();
 
             var state = this.baseState.Nest(amountToTransfer);
 
@@ -123,15 +111,8 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             (var result, var _, uint160 _) = stateTransition.Apply(message);
 
-            // TODO this should also be done in the state transition
-            this.baseState.InternalTransfers.Add(new TransferInfo
-            {
-                From = smartContractState.Message.ContractAddress.ToUint160(this.network),
-                To = addressTo.ToUint160(this.network),
-                Value = amountToTransfer
-            });
-
-            this.logger.LogTrace("(-)");
+            // TODO null currently used to indicate a transfer only took place
+            if (result == null) return TransferResult.Empty();
 
             return TransferResult.Transferred(result.Result);
         }
@@ -145,40 +126,20 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             EnsureContractHasEnoughBalance(smartContractState, amountToTransfer);
 
-            // Discern whether this is a contract or an ordinary address.
-            // TODO this should also be done in the state transition
-            byte[] contractCode = this.baseState.Repository.GetCode(addressTo.ToUint160(this.network));
-
-            if (contractCode == null || contractCode.Length == 0)
-            {
-                this.baseState.InternalTransfers.Add(new TransferInfo
-                {
-                    From = smartContractState.Message.ContractAddress.ToUint160(this.network),
-                    To = addressTo.ToUint160(this.network),
-                    Value = amountToTransfer
-                });
-
-                this.logger.LogTrace("(-)[TRANSFER_TO_SENDER]:Transfer {0} from {1} to {2}.", smartContractState.Message.ContractAddress, addressTo, amountToTransfer);
-                return TransferResult.Empty();
-            }
-
-            this.logger.LogTrace("(-)[TRANSFER_TO_CONTRACT]");
-
             // Calling a receive handler:
             ulong gasBudget = DefaultGasLimit; // for Transfer always send limited gas to prevent re-entrance.
+
+            // Ensure we have enough gas left to be able to fund the new GasMeter.
+            if (smartContractState.GasMeter.GasAvailable < gasBudget)
+                throw new InsufficientGasException();
 
             var message = new ContractTransferMessage
             {
                 To = addressTo.ToUint160(this.network),
                 From = smartContractState.Message.ContractAddress.ToUint160(this.network),
                 Amount = amountToTransfer,
-                GasLimit = (Gas) gasBudget,
-                Code = contractCode
+                GasLimit = (Gas) gasBudget
             };
-
-            // Ensure we have enough gas left to be able to fund the new GasMeter.
-            if (smartContractState.GasMeter.GasAvailable < message.GasLimit)
-                throw new InsufficientGasException();
 
             var state = this.baseState.Nest(amountToTransfer);
 
@@ -186,15 +147,8 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             (var result, var _, uint160 _) = stateTransition.Apply(message);
 
-            // TODO this should also be done in the state transition
-            this.baseState.InternalTransfers.Add(new TransferInfo
-            {
-                From = smartContractState.Message.ContractAddress.ToUint160(this.network),
-                To = addressTo.ToUint160(this.network),
-                Value = amountToTransfer
-            });
-
-            this.logger.LogTrace("(-)");
+            // TODO null currently used to indicate a transfer only took place
+            if (result == null) return TransferResult.Empty();
 
             return TransferResult.Transferred(result.Result);
         }
