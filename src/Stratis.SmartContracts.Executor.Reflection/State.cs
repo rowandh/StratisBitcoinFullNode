@@ -162,19 +162,12 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 this.Repository.Commit();
             }
 
-            CreateResult createResult = revert
-                ? CreateResult.Failed()
-                : CreateResult.Succeeded(address.ToAddress(this.Network));
-
             return new StateTransitionResult
             {
                 Success = !revert,
                 GasConsumed = gasMeter.GasConsumed,
                 VmExecutionResult = result,
-                ContractAddress = address,
-                Kind = StateTransitionKind.InternalCreate,
-                TransferResult = null,
-                CreateResult = createResult
+                ContractAddress = address
             };
         }
 
@@ -212,8 +205,6 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 {
                     Success = false,
                     GasConsumed = (Gas)0,
-                    Kind = StateTransitionKind.None,
-                    TransferResult = TransferResult.Empty(),
                     ContractAddress = message.To,
                     VmExecutionResult =  VmExecutionResult.Error(new SmartContractDoesNotExistException("No code"))
                 };
@@ -247,8 +238,6 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 Success = !revert,
                 GasConsumed = gasMeter.GasConsumed,
                 VmExecutionResult = result,
-                Kind = StateTransitionKind.Call,
-                TransferResult = revert ? TransferResult.Failed(result.ExecutionException) : TransferResult.Transferred(result.Result),
                 ContractAddress = message.To
             };
         }
@@ -316,8 +305,6 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 {
                     Success = true,
                     GasConsumed = (Gas)0,
-                    Kind = StateTransitionKind.Transfer,
-                    TransferResult = TransferResult.Empty(),
                     ContractAddress = message.To
                 };
             }

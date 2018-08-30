@@ -50,7 +50,9 @@ namespace Stratis.SmartContracts.Executor.Reflection
             // Update parent gas meter.
             smartContractState.GasMeter.Spend(result.GasConsumed);
 
-            return result.CreateResult;
+            return result.Success
+                ? CreateResult.Succeeded(result.ContractAddress.ToAddress(this.network))
+                : CreateResult.Failed();
         }
 
         ///<inheritdoc />
@@ -76,7 +78,9 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             var result = this.state.Apply(message);
 
-            return result.TransferResult;
+            return result.Success
+                ? TransferResult.Transferred(result.VmExecutionResult.Result)
+                : TransferResult.Failed(result.VmExecutionResult.ExecutionException);
         }
 
         ///<inheritdoc />
@@ -100,7 +104,9 @@ namespace Stratis.SmartContracts.Executor.Reflection
             
             var result = this.state.Apply(message);
 
-            return result.TransferResult;
+            return result.Success 
+                ? TransferResult.Empty() 
+                : TransferResult.Failed(result.VmExecutionResult?.ExecutionException);
         }
     }
 }
