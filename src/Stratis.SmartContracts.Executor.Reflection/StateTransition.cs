@@ -5,7 +5,7 @@ using Stratis.SmartContracts.Executor.Reflection.Serialization;
 
 namespace Stratis.SmartContracts.Executor.Reflection
 {
-    public class StateTransition
+    public class StateTransition : IStateTransition
     {
         public StateTransition(
             InternalTransactionExecutorFactory internalTransactionExecutorFactory, 
