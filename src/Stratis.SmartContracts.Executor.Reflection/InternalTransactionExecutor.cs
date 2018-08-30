@@ -62,12 +62,12 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             var stateTransition = new StateTransition(this.internalTransactionExecutorFactory, nestedState, this.vm, this.network);
 
-            (var result, var nestedGasMeter, var address) = stateTransition.Apply(message);
+            var result = stateTransition.Apply(message);
 
             // Update parent gas meter.
-            smartContractState.GasMeter.Spend(nestedGasMeter.GasConsumed);
+            smartContractState.GasMeter.Spend(result.GasConsumed);
 
-            return CreateResult.Succeeded(address.ToAddress(this.network));
+            return result.CreateResult;
         }
 
         ///<inheritdoc />
@@ -96,12 +96,9 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             var stateTransition = new StateTransition(this.internalTransactionExecutorFactory, state, this.vm, this.network);
 
-            (var result, var _, uint160 _) = stateTransition.Apply(message);
+            var result = stateTransition.Apply(message);
 
-            // TODO null currently used to indicate a transfer only took place
-            if (result == null) return TransferResult.Empty();
-
-            return TransferResult.Transferred(result.Result);
+            return result.TransferResult;
         }
 
         ///<inheritdoc />
@@ -128,12 +125,9 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             var stateTransition = new StateTransition(this.internalTransactionExecutorFactory, state, this.vm, this.network);
 
-            (var result, var _, uint160 _) = stateTransition.Apply(message);
+            var result = stateTransition.Apply(message);
 
-            // TODO null currently used to indicate a transfer only took place
-            if (result == null) return TransferResult.Empty();
-
-            return TransferResult.Transferred(result.Result);
+            return result.TransferResult;
         }
     }
 }

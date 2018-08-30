@@ -68,9 +68,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             var stateTransition = new StateTransition(this.internalTransactionExecutorFactory, state, this.vm, this.network);
 
-            VmExecutionResult result;
-            IGasMeter gasMeter;
-            uint160 address;
+            StateTransitionResult result;
 
             if (creation)
             {
@@ -83,7 +81,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                     Method = new MethodCall(null, callData.MethodParameters) // TODO handle constructor MethodCall name
                 };
 
-                (result, gasMeter, address) = stateTransition.Apply(message);
+                result = stateTransition.Apply(message);
             }
             else
             {
@@ -96,14 +94,14 @@ namespace Stratis.SmartContracts.Executor.Reflection
                     Method = new MethodCall(callData.MethodName, callData.MethodParameters),
                 };
 
-                (result, gasMeter, address) = stateTransition.Apply(message);
+                result = stateTransition.Apply(message);
             }
 
-            var revert = result.ExecutionException != null;
+            var revert = result.Success;
 
             Transaction internalTransaction = this.transferProcessor.Process(
                 this.stateSnapshot,
-                address,
+                result.ContractAddress,
                 transactionContext,
                 state.InternalTransfers,
                 revert);
@@ -112,15 +110,15 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 callData,
                 transactionContext.MempoolFee,
                 transactionContext.Sender,
-                gasMeter.GasConsumed,
-                result.ExecutionException);
+                result.GasConsumed,
+                result.VmExecutionResult.ExecutionException);
 
             var executionResult = new SmartContractExecutionResult
             {
-                NewContractAddress = !revert && creation ? address : null,
-                Exception = result.ExecutionException,
-                GasConsumed = gasMeter.GasConsumed,
-                Return = result.Result,
+                NewContractAddress = !revert && creation ? result.ContractAddress : null,
+                Exception = result.VmExecutionResult.ExecutionException,
+                GasConsumed = result.GasConsumed,
+                Return = result.VmExecutionResult.Result,
                 InternalTransaction = internalTransaction,
                 Fee = fee,
                 Refunds = refundTxOuts,
