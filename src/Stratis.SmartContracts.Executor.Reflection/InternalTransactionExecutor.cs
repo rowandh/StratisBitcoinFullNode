@@ -56,8 +56,6 @@ namespace Stratis.SmartContracts.Executor.Reflection
             // Build objects for VM
             byte[] contractCode = this.baseState.Repository.GetCode(smartContractState.Message.ContractAddress.ToUint160(this.network)); // TODO: Fix this when calling from constructor.
 
-            var address = this.addressGenerator.GenerateAddress(this.baseState.TransactionHash, this.baseState.GetNonceAndIncrement());
-
             var message = new InternalCreateMessage
             {
                 From = smartContractState.Message.ContractAddress.ToUint160(this.network),
@@ -72,7 +70,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             var stateTransition = new StateTransition(this.internalTransactionExecutorFactory, nestedState, this.vm, this.network, message);
 
-            (var result, var nestedGasMeter, var _) = stateTransition.Apply(message);
+            (var result, var nestedGasMeter, var address) = stateTransition.Apply(message);
 
             // Update parent gas meter.
             smartContractState.GasMeter.Spend(nestedGasMeter.GasConsumed);
