@@ -8,11 +8,14 @@ namespace Stratis.SmartContracts.Executor.Reflection
             : base(from, amount, gasLimit)
         {
             this.Code = code;
-            this.Method = new MethodCall(null, parameters);
+            this.Parameters = parameters;
         }
 
         public byte[] Code { get; }
 
-        public MethodCall Method { get; }
+        /// <summary>
+        /// The parameters to use when creating the contract.
+        /// </summary>
+        public object[] Parameters { get; }
     }
 }

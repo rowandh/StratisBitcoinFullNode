@@ -87,11 +87,8 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
 
             byte[] contractExecutionCode = compilationResult.Compilation;
             var methodParameters = new object[] { (ulong)5 };
-            var callData = new MethodCall(null, methodParameters);
 
-            VmExecutionResult result = this.vm.Create(callData,
-                this.contractState,
-                contractExecutionCode);
+            VmExecutionResult result = this.vm.Create(this.contractState, contractExecutionCode, methodParameters);
 
             Assert.Null(result.ExecutionException);
         }

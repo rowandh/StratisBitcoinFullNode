@@ -37,7 +37,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 smartContractState.Message.ContractAddress.ToUint160(this.network),
                 amountToTransfer,
                 (Gas) gasBudget,
-                new MethodCall(null, parameters),
+                parameters,
                 typeof(T).Name
             );
 

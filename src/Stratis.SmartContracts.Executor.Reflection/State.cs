@@ -140,7 +140,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             return new StateSnapshot(this.LogHolder, this.InternalTransfers, this.Nonce, root);
         }
 
-        private StateTransitionResult ApplyCreate(MethodCall method, byte[] code, BaseMessage message, string type = null)
+        private StateTransitionResult ApplyCreate(object[] parameters, byte[] code, BaseMessage message, string type = null)
         {
             if (this.GasRemaining < message.GasLimit || this.GasRemaining < GasPriceList.BaseCost)
                 throw new InsufficientGasException();
@@ -157,7 +157,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             var contractState = this.ContractState(gasMeter, address, message, this.Repository);
 
-            var result = this.Vm.Create(method, contractState, code, type);
+            var result = this.Vm.Create(contractState, code, parameters, type);
 
             var revert = result.ExecutionException != null;
 
@@ -187,7 +187,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
         /// </summary>
         public StateTransitionResult Apply(ExternalCreateMessage message)
         {
-            return this.ApplyCreate(message.Method, message.Code, message);
+            return this.ApplyCreate(message.Parameters, message.Code, message);
         }
 
         /// <summary>
@@ -202,7 +202,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
             byte[] contractCode = this.Repository.GetCode(message.From);
 
-            return this.ApplyCreate(message.Method, contractCode, message, message.Type);
+            return this.ApplyCreate(message.Parameters, contractCode, message, message.Type);
         }
 
         private StateTransitionResult ApplyCall(CallMessage message, byte[] contractCode)

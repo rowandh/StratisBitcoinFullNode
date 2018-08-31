@@ -39,7 +39,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
         /// <summary>
         /// Creates a new instance of a smart contract by invoking the contract's constructor
         /// </summary>
-        public VmExecutionResult Create(MethodCall methodCall, ISmartContractState contractState, byte[] contractCode, string typeName = null)
+        public VmExecutionResult Create(ISmartContractState contractState, byte[] contractCode, object[] parameters, string typeName = null)
         {
             this.logger.LogTrace("()");
 
@@ -88,7 +88,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             //LogExecutionContext(this.logger, contract.State.Block, contract.State.Message, contract.Address, methodCall);
 
             // Invoke the constructor of the provided contract code
-            IContractInvocationResult invocationResult = contract.InvokeConstructor(methodCall.Parameters);
+            IContractInvocationResult invocationResult = contract.InvokeConstructor(parameters);
 
             if (!invocationResult.IsSuccess)
             {

@@ -4,17 +4,17 @@ namespace Stratis.SmartContracts.Executor.Reflection
 {
     public class InternalCreateMessage : BaseMessage
     {
-        public InternalCreateMessage(uint160 from, ulong amount, Gas gasLimit, MethodCall methodCall, string typeName)
+        public InternalCreateMessage(uint160 from, ulong amount, Gas gasLimit, object[] parameters, string typeName)
             : base(from, amount, gasLimit)
         {
-            this.Method = methodCall;
+            this.Parameters = parameters;
             this.Type = typeName;
         }
 
         /// <summary>
         /// Internal creates need a method call with params and an empty method name.
         /// </summary>
-        public MethodCall Method { get; }
+        public object[] Parameters{ get; }
 
         /// <summary>
         /// Internal creates need to specify the Type they are creating.
