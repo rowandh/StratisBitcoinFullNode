@@ -205,20 +205,8 @@ namespace Stratis.SmartContracts.Executor.Reflection
             return this.ApplyCreate(message.Method, contractCode, message, message.Type);
         }
 
-        private StateTransitionResult ApplyCall(CallMessage message)
+        private StateTransitionResult ApplyCall(CallMessage message, byte[] contractCode)
         {
-            byte[] contractCode = this.Repository.GetCode(message.To);
-
-            if (contractCode == null || contractCode.Length == 0)
-            {
-                return new StateTransitionResult(
-                    (Gas) 0,
-                    message.To,
-                    false,
-                    VmExecutionResult.Error(new SmartContractDoesNotExistException("No code"))
-                );
-            }
-
             if (this.GasRemaining < message.GasLimit || this.GasRemaining < GasPriceList.BaseCost)
                 throw new InsufficientGasException();
 
@@ -264,7 +252,19 @@ namespace Stratis.SmartContracts.Executor.Reflection
             if (!enoughBalance)
                 throw new InsufficientBalanceException();
 
-            var result = this.ApplyCall(message);
+            byte[] contractCode = this.Repository.GetCode(message.To);
+
+            if (contractCode == null || contractCode.Length == 0)
+            {
+                return new StateTransitionResult(
+                    (Gas)0,
+                    message.To,
+                    false,
+                    VmExecutionResult.Error(new SmartContractDoesNotExistException("No code"))
+                );
+            }
+
+            var result = this.ApplyCall(message, contractCode);
 
             // For successful internal calls we need to add the transfer to the internal transfer list.
             // For external calls we do not need to do this.
@@ -286,7 +286,19 @@ namespace Stratis.SmartContracts.Executor.Reflection
         /// </summary>
         public StateTransitionResult Apply(ExternalCallMessage message)
         {
-            return this.ApplyCall(message);
+            byte[] contractCode = this.Repository.GetCode(message.To);
+
+            if (contractCode == null || contractCode.Length == 0)
+            {
+                return new StateTransitionResult(
+                    (Gas)0,
+                    message.To,
+                    false,
+                    VmExecutionResult.Error(new SmartContractDoesNotExistException("No code"))
+                );
+            }
+
+            return this.ApplyCall(message, contractCode);
         }
 
         /// <summary>
@@ -320,7 +332,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 );
             }
 
-            return this.ApplyCall(message);
+            return this.ApplyCall(message, contractCode);
         }
 
         /// <summary>
