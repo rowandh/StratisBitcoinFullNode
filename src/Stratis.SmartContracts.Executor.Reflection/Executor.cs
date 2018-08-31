@@ -84,7 +84,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                     transactionContext.TxOutValue,
                     callData.GasLimit,
                     callData.ContractExecutionCode,
-                    new MethodCall(null, callData.MethodParameters) // TODO handle constructor MethodCall name
+                    callData.MethodParameters
                 );
 
                 result = state.Apply(message);

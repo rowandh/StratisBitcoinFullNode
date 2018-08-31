@@ -4,11 +4,11 @@ namespace Stratis.SmartContracts.Executor.Reflection
 {
     public class ExternalCreateMessage : BaseMessage
     {
-        public ExternalCreateMessage(uint160 from, ulong amount, Gas gasLimit, byte[] code, MethodCall methodCall)
+        public ExternalCreateMessage(uint160 from, ulong amount, Gas gasLimit, byte[] code, object[] parameters)
             : base(from, amount, gasLimit)
         {
             this.Code = code;
-            this.Method = methodCall;
+            this.Method = new MethodCall(null, parameters);
         }
 
         public byte[] Code { get; }
