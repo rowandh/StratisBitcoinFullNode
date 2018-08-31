@@ -2,6 +2,9 @@
 
 namespace Stratis.SmartContracts.Executor.Reflection
 {
+    /// <summary>
+    /// Base class for a call message.
+    /// </summary>
     public abstract class CallMessage : BaseMessage
     {
         protected CallMessage(uint160 to, uint160 from, ulong amount, Gas gasLimit, MethodCall methodCall)
@@ -12,10 +15,13 @@ namespace Stratis.SmartContracts.Executor.Reflection
         }
 
         /// <summary>
-        /// All transfers have a destination.
+        /// The recipient of the message.
         /// </summary>
         public uint160 To { get; }
 
+        /// <summary>
+        /// The method to invoke on the contract and its parameters.
+        /// </summary>
         public MethodCall Method { get; }
     }
 }

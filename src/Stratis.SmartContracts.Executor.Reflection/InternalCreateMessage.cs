@@ -2,6 +2,10 @@
 
 namespace Stratis.SmartContracts.Executor.Reflection
 {
+    /// <summary>
+    /// Represents a contract creation message originating internally. Occurs when a contract creates another contract
+    /// using its <see cref="SmartContract.Create{T}"/> method.
+    /// </summary>
     public class InternalCreateMessage : BaseMessage
     {
         public InternalCreateMessage(uint160 from, ulong amount, Gas gasLimit, object[] parameters, string typeName)
@@ -12,12 +16,12 @@ namespace Stratis.SmartContracts.Executor.Reflection
         }
 
         /// <summary>
-        /// Internal creates need a method call with params and an empty method name.
+        /// The parameters to use when creating the contract.
         /// </summary>
         public object[] Parameters{ get; }
 
         /// <summary>
-        /// Internal creates need to specify the Type they are creating.
+        /// The Type of contract to create.
         /// </summary>
         public string Type { get; }
     }

@@ -12,17 +12,17 @@ namespace Stratis.SmartContracts.Executor.Reflection
         }
 
         /// <summary>
-        /// All transfers have a recipient.
+        /// The address of the message's sender.
         /// </summary>
         public uint160 From { get; }
 
         /// <summary>
-        /// All transfers have an amount.
+        /// The value sent with the message.
         /// </summary>
         public ulong Amount { get; }
 
         /// <summary>
-        /// All transfers have some gas limit associated with them. This is even required for fallback calls.
+        /// The maximum amount of gas that can be expended while executing the message.
         /// </summary>
         public Gas GasLimit { get; }
     }
