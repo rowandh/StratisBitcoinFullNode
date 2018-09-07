@@ -93,5 +93,78 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
             // In this test we only ever spend the base fee.
             Assert.Equal(GasPriceList.BaseCost, result.GasConsumed);
         }
+
+        [Fact]
+        public void ExternalCreate_Vm_Error()
+        {
+            var block = Mock.Of<IBlock>();
+            var network = new SmartContractsRegTest();
+            var transactionHash = new uint256();
+            var expectedAddressGenerationNonce = 0UL;
+            var newContractAddress = uint160.One;
+            var gasLimit = (Gas)(GasPriceList.BaseCost + 100000);
+
+            var externalCreateMessage = new ExternalCreateMessage(
+                uint160.Zero,
+                10,
+                gasLimit,
+                new byte[0],
+                null
+            );
+
+            var serializer = Mock.Of<IContractPrimitiveSerializer>();
+            var iteFactory = new Mock<IInternalTransactionExecutorFactory>();
+
+            var trackedState = new Mock<IContractState>();
+            var contractStateRoot = new Mock<IContractStateRoot>();
+            contractStateRoot.Setup(c => c.StartTracking())
+                .Returns(trackedState.Object);
+
+            var addressGenerator = new Mock<IAddressGenerator>();
+            addressGenerator
+                .Setup(a => a.GenerateAddress(transactionHash, expectedAddressGenerationNonce))
+                .Returns(newContractAddress);
+
+            var vmExecutionResult = VmExecutionResult.Error(new SmartContractAssertException("Error"));
+            var vm = new Mock<ISmartContractVirtualMachine>(MockBehavior.Strict);
+            vm.Setup(v => v.Create(trackedState.Object, It.IsAny<ISmartContractState>(), externalCreateMessage.Code,
+                    externalCreateMessage.Parameters, null))
+                .Returns(vmExecutionResult);
+
+            var state = new State(
+                serializer,
+                iteFactory.Object,
+                vm.Object,
+                contractStateRoot.Object,
+                block,
+                network,
+                0,
+                transactionHash,
+                addressGenerator.Object,
+                gasLimit
+            );
+
+            StateTransitionResult result = state.Apply(externalCreateMessage);
+
+            addressGenerator.Verify(a => a.GenerateAddress(transactionHash, expectedAddressGenerationNonce), Times.Once);
+
+            contractStateRoot.Verify(sr => sr.StartTracking(), Times.Once);
+
+            trackedState.Verify(ts => ts.CreateAccount(newContractAddress), Times.Once);
+
+            vm.Verify(v => v.Create(trackedState.Object, It.IsAny<ISmartContractState>(), externalCreateMessage.Code, externalCreateMessage.Parameters, null), Times.Once);
+
+            trackedState.Verify(ts => ts.Commit(), Times.Never);
+
+            // TODO - It's a hack to need to test the internal state of the object like this.
+            Assert.Equal(contractStateRoot.Object, state.GetPrivateFieldValue("intermediateState"));
+            Assert.False(result.IsSuccess);
+            Assert.True(result.IsFailure);
+            Assert.NotNull(result.Error);
+            Assert.Equal(vmExecutionResult.ExecutionException, result.Error.VmException);
+            Assert.Equal(StateTransitionErrorKind.VmError, result.Error.Kind);
+            Assert.Equal(gasLimit - result.GasConsumed, state.GasRemaining);
+            Assert.Equal(GasPriceList.BaseCost, result.GasConsumed);
+        }
     }
 }
