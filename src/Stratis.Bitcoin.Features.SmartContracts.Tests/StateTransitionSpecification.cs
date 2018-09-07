@@ -87,11 +87,125 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
 
             Assert.True(result.IsSuccess);
             Assert.NotNull(result.Success);
+            Assert.Equal(trackedState.Object, state.GetPrivateFieldValue("intermediateState"));
             Assert.Equal(newContractAddress, result.Success.ContractAddress);
             Assert.Equal(vmExecutionResult.Result, result.Success.ExecutionResult);
             Assert.Equal(gasLimit - result.GasConsumed, state.GasRemaining);
             // In this test we only ever spend the base fee.
             Assert.Equal(GasPriceList.BaseCost, result.GasConsumed);
+        }
+
+        [Fact]
+        public void ExternalCreate_Nested_Create_Success()
+        {
+            var block = Mock.Of<IBlock>();
+            var network = new SmartContractsRegTest();
+            var transactionHash = new uint256();
+            var expectedAddressGenerationNonce = 0UL;
+            var newContractAddress = uint160.One;
+            var newContractAddress2 = new uint160(2);
+
+            var gasLimit = (Gas)(GasPriceList.BaseCost + 100000);
+
+            var externalCreateMessage = new ExternalCreateMessage(
+                uint160.Zero,
+                10,
+                gasLimit,
+                new byte[0],
+                null
+            );
+
+            var internalCreateMessage = new InternalCreateMessage(
+                newContractAddress,
+                0,
+                (Gas) (GasPriceList.BaseCost + 1000),
+                null,
+                "Test"
+            );
+
+            var serializer = Mock.Of<IContractPrimitiveSerializer>();
+            var iteFactory = new Mock<IInternalTransactionExecutorFactory>();
+
+            var trackedState2 = new Mock<IContractState>();
+            var trackedState = new Mock<IContractState>();
+            trackedState.Setup(c => c.StartTracking())
+                .Returns(trackedState2.Object);
+
+            var contractStateRoot = new Mock<IContractStateRoot>();
+            contractStateRoot.Setup(c => c.StartTracking())
+                .Returns(trackedState.Object);
+
+            var addressGenerator = new Mock<IAddressGenerator>();
+            addressGenerator
+                .Setup(a => a.GenerateAddress(transactionHash, expectedAddressGenerationNonce))
+                .Returns(newContractAddress);
+
+            addressGenerator
+                .Setup(a => a.GenerateAddress(transactionHash, expectedAddressGenerationNonce + 1))
+                .Returns(newContractAddress2);
+
+            var vmExecutionResult = VmExecutionResult.Success(true, "Test");
+            var vmExecutionResult2 = VmExecutionResult.Success(true, "NestedTest");
+
+            var vm = new Mock<ISmartContractVirtualMachine>(MockBehavior.Strict);
+
+            var state = new State(
+                serializer,
+                iteFactory.Object,
+                vm.Object,
+                contractStateRoot.Object,
+                block,
+                network,
+                0,
+                transactionHash,
+                addressGenerator.Object,
+                gasLimit
+            );
+
+            // Setup the VM to invoke the state with a nested internal create
+            vm.Setup(v => v.Create(trackedState.Object, It.IsAny<ISmartContractState>(), externalCreateMessage.Code,
+                    externalCreateMessage.Parameters, null))
+                .Callback(() => state.Apply(internalCreateMessage))
+                .Returns(vmExecutionResult);
+
+            // Setup the nested VM create result
+            vm.Setup(v => v.Create(trackedState2.Object, It.IsAny<ISmartContractState>(), externalCreateMessage.Code,
+                    internalCreateMessage.Parameters, internalCreateMessage.Type))
+                .Returns(vmExecutionResult2);
+
+            StateTransitionResult result = state.Apply(externalCreateMessage);
+
+            addressGenerator.Verify(a => a.GenerateAddress(transactionHash, expectedAddressGenerationNonce), Times.Once);
+
+            contractStateRoot.Verify(sr => sr.StartTracking(), Times.Once);
+
+            trackedState.Verify(ts => ts.CreateAccount(newContractAddress), Times.Once);
+
+            vm.Verify(v => v.Create(trackedState.Object, It.IsAny<ISmartContractState>(), externalCreateMessage.Code, externalCreateMessage.Parameters, null), Times.Once);
+
+            // Nesting begins here
+            // The nested executor starts tracking on the parent state
+            trackedState.Verify(ts => ts.StartTracking(), Times.Once);
+
+            // Nested state transition generates a new address with the next nonce
+            addressGenerator.Verify(a => a.GenerateAddress(transactionHash, expectedAddressGenerationNonce + 1), Times.Once);
+
+            // VM is called with all nested state params and the original code
+            vm.Verify(v => v.Create(trackedState2.Object, It.IsAny<ISmartContractState>(), externalCreateMessage.Code, internalCreateMessage.Parameters, internalCreateMessage.Type), Times.Once);
+
+            // The nested executor calls commit on the nested tracked state
+            trackedState2.Verify(ts => ts.Commit(), Times.Once);
+
+            Assert.Equal(1, state.InternalTransfers.Count);
+            // TODO - It's a hack to need to test the internal state of the object like this.
+            // We expect the intermediateState to be the last "committed to" state
+            Assert.Equal(trackedState2.Object, state.GetPrivateFieldValue("intermediateState"));
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Success);
+            Assert.Equal(gasLimit - result.GasConsumed, state.GasRemaining);
+
+            // Two nested operations
+            Assert.Equal(GasPriceList.BaseCost * 2, result.GasConsumed);
         }
 
         [Fact]
