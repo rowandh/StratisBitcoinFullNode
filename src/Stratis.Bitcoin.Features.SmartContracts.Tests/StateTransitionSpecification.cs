@@ -364,5 +364,81 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
             Assert.Equal(gasLimit - result.GasConsumed, state.GasRemaining);
             Assert.Equal(GasPriceList.BaseCost, result.GasConsumed);
         }
+
+        [Fact]
+        public void ExternalCall_Success()
+        {
+            var transactionHash = new uint256();
+            var gasLimit = (Gas)(GasPriceList.BaseCost + 100000);
+            var vmExecutionResult = VmExecutionResult.Success(true, "Test");
+            
+            // Code must have a length to pass precondition checks.
+            var code = new byte[1];
+            var typeName = "Test";
+
+            var externalCallMessage = new ExternalCallMessage(
+                uint160.Zero,
+                uint160.Zero,
+                0,
+                gasLimit,
+                new MethodCall("Test", null)
+            );
+
+            this.contractStateRoot
+                .Setup(sr => sr.GetCode(externalCallMessage.To))
+                .Returns(code);
+
+            this.trackedState
+                .Setup(sr => sr.GetContractType(externalCallMessage.To))
+                .Returns(typeName);
+
+            this.vm.Setup(v => 
+                    v.ExecuteMethod(It.IsAny<ISmartContractState>(), externalCallMessage.Method, code, typeName))
+                .Returns(vmExecutionResult);
+
+            var state = new State(
+                this.serializer,
+                this.iteFactory.Object,
+                this.vm.Object,
+                this.contractStateRoot.Object,
+                this.block,
+                this.network,
+                0,
+                transactionHash,
+                this.addressGenerator.Object,
+                gasLimit
+            );
+
+            StateTransitionResult result = state.Apply(externalCallMessage);
+
+            this.contractStateRoot.Verify(sr => sr.GetCode(externalCallMessage.To), Times.Once);
+
+            this.contractStateRoot.Verify(sr => sr.StartTracking(), Times.Once);
+
+            // Getting Type is called on the tracked state as it's possible
+            // this also occurs on a nested call and the Type only exists
+            // in the nested repository
+            this.trackedState.Verify(sr => sr.GetContractType(externalCallMessage.To), Times.Once);
+
+            this.addressGenerator.Verify(a => a.GenerateAddress(It.IsAny<uint256>(), It.IsAny<ulong>()), Times.Never);
+
+            this.trackedState.Verify(ts => ts.CreateAccount(It.IsAny<uint160>()), Times.Never);
+            
+            this.vm.Verify(
+                v => v.ExecuteMethod(It.IsAny<ISmartContractState>(), externalCallMessage.Method, code, typeName),
+                Times.Once);
+
+            this.trackedState.Verify(ts => ts.Commit(), Times.Once);
+
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Success);
+            Assert.Equal(this.trackedState.Object, state.GetPrivateFieldValue("intermediateState"));
+            Assert.Equal(externalCallMessage.To, result.Success.ContractAddress);
+            Assert.Equal(vmExecutionResult.Result, result.Success.ExecutionResult);
+            Assert.Equal(gasLimit - result.GasConsumed, state.GasRemaining);
+            // In this test we only ever spend the base fee.
+            Assert.Equal(GasPriceList.BaseCost, result.GasConsumed);
+        }
+
     }
 }
