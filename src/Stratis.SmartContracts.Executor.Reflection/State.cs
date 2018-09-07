@@ -56,7 +56,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
         public State(
             IContractPrimitiveSerializer serializer,
-            InternalTransactionExecutorFactory internalTransactionExecutorFactory,
+            IInternalTransactionExecutorFactory internalTransactionExecutorFactory,
             ISmartContractVirtualMachine vm,
             IContractStateRoot repository,
             IBlock block,
@@ -103,7 +103,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
         public IReadOnlyList<TransferInfo> InternalTransfers => this.internalTransfers;
 
-        public InternalTransactionExecutorFactory InternalTransactionExecutorFactory { get; }
+        public IInternalTransactionExecutorFactory InternalTransactionExecutorFactory { get; }
 
         public ISmartContractVirtualMachine Vm { get; }
 
