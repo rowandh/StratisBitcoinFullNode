@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -150,7 +151,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
         /// <summary>
         /// Ensures the contract is initialized by setting its state fields.
         /// </summary>
-        private void EnsureInitialized()
+        public void EnsureInitialized()
         {
             if (!this.initialized)
                 SetStateFields(this.instance, this.State);
@@ -193,10 +194,110 @@ namespace Stratis.SmartContracts.Executor.Reflection
             }            
         }
 
+        public static (TimeSpan, TimeSpan) SetStateField(SmartContract smartContract, ISmartContractState contractState)
+        {
+            var sw = new Stopwatch();
+
+            sw.Start();
+            var field = typeof(SmartContract).GetField("smartContractState",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            sw.Stop();
+
+            var getField = sw.Elapsed;
+
+            sw.Restart();
+
+            field.SetValue(smartContract, contractState);
+
+            sw.Stop();
+
+            return (getField, sw.Elapsed);
+        }
+
+
         /// <summary>
         /// Uses reflection to set the state fields on the contract object.
         /// </summary>
-        private static void SetStateFields(SmartContract smartContract, ISmartContractState contractState)
+        public static (TimeSpan, TimeSpan) SetStateFields2(SmartContract smartContract, ISmartContractState contractState)
+        {
+            var sw = new Stopwatch();
+            sw.Start();
+
+            FieldInfo[] fields = typeof(SmartContract).GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
+            sw.Stop();
+
+            var getField = sw.Elapsed;
+
+            sw.Reset();
+
+            foreach (FieldInfo field in fields)
+            {
+                switch (field.Name)
+                {
+                    case "gasMeter":
+                        sw.Start();
+                        field.SetValue(smartContract, contractState.GasMeter);
+                        sw.Stop();
+                        break;
+                    case "Block":
+                        sw.Start();
+
+                        field.SetValue(smartContract, contractState.Block);
+                        sw.Stop();
+                        break;
+                    case "getBalance":
+                        sw.Start();
+
+                        field.SetValue(smartContract, contractState.GetBalance);
+                        sw.Stop();
+                        break;
+                    case "internalTransactionExecutor":
+                        sw.Start();
+
+                        field.SetValue(smartContract, contractState.InternalTransactionExecutor);
+                        sw.Stop();
+                        break;
+                    case "internalHashHelper":
+                        sw.Start();
+
+                        field.SetValue(smartContract, contractState.InternalHashHelper);
+                        sw.Stop();
+                        break;
+                    case "Message":
+                        sw.Start();
+
+                        field.SetValue(smartContract, contractState.Message);
+                        sw.Stop();
+                        break;
+                    case "PersistentState":
+                        sw.Start();
+
+                        field.SetValue(smartContract, contractState.PersistentState);
+                        sw.Stop();
+                        break;
+                    case "smartContractState":
+                        sw.Start();
+
+                        field.SetValue(smartContract, contractState);
+                        sw.Stop();
+                        break;
+                    case "Serializer":
+                        sw.Start();
+
+                        field.SetValue(smartContract, contractState.Serializer);
+                        sw.Stop();
+                        break;
+                    default:
+                        break;
+                }
+            }
+            return (getField, sw.Elapsed);
+        }
+
+        /// <summary>
+        /// Uses reflection to set the state fields on the contract object.
+        /// </summary>
+        public static void SetStateFields(SmartContract smartContract, ISmartContractState contractState)
         {
             FieldInfo[] fields = typeof(SmartContract).GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
 

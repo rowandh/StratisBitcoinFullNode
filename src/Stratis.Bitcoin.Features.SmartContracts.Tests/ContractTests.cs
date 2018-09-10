@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Moq;
 using NBitcoin;
 using Stratis.SmartContracts;
@@ -43,10 +44,15 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
         public class TestContract : SmartContract
         {
             public TestContract(ISmartContractState smartContractState) 
-                : base(smartContractState)
+                : base(FuckThisShitUp(smartContractState))
             {
                 this.ConstructorCalledCount++;
                 this.State = smartContractState;
+            }
+
+            public static ISmartContractState FuckThisShitUp(ISmartContractState state)
+            {
+                return (ISmartContractState)null;
             }
 
             public TestContract(ISmartContractState smartContractState, int param)
@@ -394,6 +400,51 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
             Assert.Equal(this.state.PersistentState, persistentState);
             Assert.NotNull(smartContractState);
             Assert.Equal(this.state, smartContractState);
+        }
+
+        [Fact]
+        public void Profile_Reflection()
+        {
+            var sw = new Stopwatch();
+            var getFieldsAll = TimeSpan.Zero;
+            var setFieldsAll = TimeSpan.Zero;
+
+            var getFieldsOne = TimeSpan.Zero;
+            var setFieldsOne = TimeSpan.Zero;
+            sw.Start();
+
+
+            for (var i = 0; i < 1000000; i++)
+            {
+                var (getField, setField) = Contract.SetStateFields2(this.instance, this.state);
+
+                getFieldsAll += getField;
+                setFieldsAll += setField;
+            }
+
+            sw.Stop();
+
+            var timeElapsed1 = sw.Elapsed;
+
+            sw.Restart();
+
+            for (var i = 0; i < 1000000; i++)
+            {
+                var (getField, setField) = Contract.SetStateField(this.instance, this.state);
+                
+                getFieldsOne += getField;
+                setFieldsOne += setField;
+            }
+
+            sw.Stop();
+
+            var timeElapsed2 = sw.Elapsed;
+
+            var diff = timeElapsed2 - timeElapsed1;
+
+            var ratio = timeElapsed1 / timeElapsed2;
+
+            var setFieldsVssetFieldsOne = setFieldsAll / setFieldsOne;
         }
     }
 }
