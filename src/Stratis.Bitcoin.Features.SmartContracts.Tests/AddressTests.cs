@@ -1,78 +1,93 @@
-﻿using Stratis.SmartContracts;
+﻿using NBitcoin;
+using Stratis.Bitcoin.Features.SmartContracts.Networks;
+using Stratis.SmartContracts;
+using Stratis.SmartContracts.Core;
 using Xunit;
 
 namespace Stratis.Bitcoin.Features.SmartContracts.Tests
 {
     public class AddressTests
     {
+        private static readonly Network network = new SmartContractPosRegTest();
+
+        private static readonly byte[] address0Bytes = new byte[20]
+        {
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+        };
+
+        private static readonly byte[] address1Bytes = new byte[20]
+        {
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01
+        };
+
+        private static Address address0 = Address.Create(address0Bytes, BytesToAddressString(address0Bytes, network));
+        private static Address address1 = Address.Create(address1Bytes, BytesToAddressString(address1Bytes, network));
+
+        [Fact]
+        public void Address_ToString()
+        {
+            var addressString = BytesToAddressString(address0Bytes, network);
+
+            Assert.Equal(addressString, address0.ToString());
+        }
+
         [Fact]
         public void Address_Equality_Equals_Different()
         {
-            var address = new Address("address1");
-
-            var address2 = new Address("address2");
-
-            Assert.False(address.Equals(address2));
+            Assert.False(address0.Equals(address1));
         }
 
         [Fact]
         public void Address_Equality_Equals_Operator_Different()
         {
-            var address = new Address("address1");
-            var address2 = new Address("address2");
-
-            Assert.False(address == address2);
+            Assert.False(address0 == address1);
         }
 
         [Fact]
         public void Address_Equality_Equals_Same()
         {
-            var address = new Address("address1");
+            var address2 = new Address(address1);
 
-            var address2 = new Address(address.Value);
-
-            Assert.True(address.Equals(address2));
+            Assert.True(address1.Equals(address2));
         }
 
         [Fact]
         public void Address_Equality_Equals_Operator_Same()
         {
-            var address = new Address("address1");
-            var address2 = new Address(address.Value);
+            var address2 = new Address(address1);
 
-            Assert.True(address == address2);
+            Assert.True(address1 == address2);
         }
 
         [Fact]
         public void Address_Equality_Equals_Same_Instance()
         {
-            var address = new Address("address1");
-
-            Assert.True(address.Equals(address));
+            Assert.True(address0.Equals(address0));
         }
 
         [Fact]
         public void Address_Equality_Equals_Operator_Same_Instance()
         {
-            var address = new Address("address1");
-
-            Assert.True(address == address);
+            Assert.True(address0 == address0);
         }
 
         [Fact]
         public void Address_Equality_Equals_Null()
         {
-            var address = new Address("address1");
-
-            Assert.False(address.Equals(null));
+            Assert.False(address0.Equals(null));
         }
 
         [Fact]
         public void Address_Equality_Equals_Operator_Null()
         {
-            var address = new Address("address1");
+            Assert.False(address0 == null);
+        }
 
-            Assert.False(address == null);
+        private static string BytesToAddressString(byte[] bytes, Network network)
+        {
+            return new BitcoinPubKeyAddress(new KeyId(new uint160(bytes)), network).ToString();
         }
     }
 }

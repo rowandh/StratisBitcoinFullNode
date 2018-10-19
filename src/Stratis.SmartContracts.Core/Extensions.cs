@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using NBitcoin;
 using Stratis.Bitcoin.Features.Consensus;
 using Stratis.Bitcoin.Utilities;
@@ -27,14 +26,45 @@ namespace Stratis.SmartContracts.Core
             return bytes;
         }
 
+        public static byte[] ToBytes(this Address address)
+        {
+            var arr = new byte[Address.Width];
+            Buffer.BlockCopy(Utils.ToBytes(address.pn0, true), 0, arr, 4 * 0, 4);
+            Buffer.BlockCopy(Utils.ToBytes(address.pn1, true), 0, arr, 4 * 1, 4);
+            Buffer.BlockCopy(Utils.ToBytes(address.pn2, true), 0, arr, 4 * 2, 4);
+            Buffer.BlockCopy(Utils.ToBytes(address.pn3, true), 0, arr, 4 * 3, 4);
+            Buffer.BlockCopy(Utils.ToBytes(address.pn4, true), 0, arr, 4 * 4, 4);
+            return arr;
+        }
+        
         public static uint160 ToUint160(this Address address, Network network)
         {
-            return new uint160(new BitcoinPubKeyAddress(address.Value, network).Hash.ToBytes());
+            return new uint160(address.ToBytes());
+        }
+
+        public static uint160 ToUint160(this string addressString, Network network)
+        {
+            return new uint160(new BitcoinPubKeyAddress(addressString, network).Hash.ToBytes());
         }
 
         public static Address ToAddress(this uint160 address, Network network)
         {
-            return new Address(new BitcoinPubKeyAddress(new KeyId(address), network).ToString());
+            return Address.Create(address.ToBytes(), UInt160ToAddressString(address, network));
+        }
+
+        public static Address ToAddress(this string address, Network network)
+        {
+            return Address.Create(address.ToUint160(network).ToBytes(), address);
+        }
+
+        public static Address HexToAddress(this string hexString, Network network)
+        {
+            return ToAddress(new uint160(hexString), network);
+        }
+
+        private static string UInt160ToAddressString(uint160 address, Network network)
+        {
+            return new BitcoinPubKeyAddress(new KeyId(address), network).ToString();
         }
 
         public static Money GetFee(this Transaction transaction, UnspentOutputSet inputs)

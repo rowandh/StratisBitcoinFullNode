@@ -1,39 +1,63 @@
-﻿namespace Stratis.SmartContracts
+﻿using System;
+
+namespace Stratis.SmartContracts
 {
     /// <summary>
-    /// Helper struct that represents a STRAT address and is used when sending or receiving funds.
-    /// <para>
-    /// Note that the format of the address is not validated on construction, but when trying to send funds to this address.
-    /// </para>
+    /// Represents an address used when sending or receiving funds.
     /// </summary>
     public struct Address
     {
-        /// <summary>
-        /// The address as a string, in base58 format.
-        /// </summary>
-        public readonly string Value;
+        private readonly string addressString;
+        internal readonly uint pn0;
+        internal readonly uint pn1;
+        internal readonly uint pn2;
+        internal readonly uint pn3;
+        internal readonly uint pn4;
 
-        /// <summary>
-        /// Create a new address
-        /// </summary>
-        public Address(string address)
+        public const int Width = 160 / 8;
+
+        public Address(Address other)
         {
-            this.Value = address;
+            this.pn0 = other.pn0;
+            this.pn1 = other.pn1;
+            this.pn2 = other.pn2;
+            this.pn3 = other.pn3;
+            this.pn4 = other.pn4;
+            this.addressString = other.addressString;
+        }
+
+        private Address(uint pn0, uint pn1, uint pn2, uint pn3, uint pn4, string str)
+        {
+            this.pn0 = pn0;
+            this.pn1 = pn1;
+            this.pn2 = pn2;
+            this.pn3 = pn3;
+            this.pn4 = pn4;
+            this.addressString = str;
+        }
+        
+        internal static Address Create(byte[] bytes, string str)
+        {
+            var pn0 = ToUInt32(bytes, 0);
+            var pn1 = ToUInt32(bytes, 4);
+            var pn2 = ToUInt32(bytes, 8);
+            var pn3 = ToUInt32(bytes, 12);
+            var pn4 = ToUInt32(bytes, 16);
+
+            return new Address(pn0, pn1, pn2, pn3, pn4, str);
+        }
+
+        private static uint ToUInt32(byte[] value, int index)
+        {
+            return value[index]
+                   + ((uint)value[index + 1] << 8)
+                   + ((uint)value[index + 2] << 16)
+                   + ((uint)value[index + 3] << 24);
         }
 
         public override string ToString()
         {
-            return this.Value;
-        }
-
-        public static explicit operator Address(string value)
-        {
-            return new Address(value);
-        }
-
-        public static implicit operator string(Address x)
-        {
-            return x.Value;
+            return this.addressString;
         }
 
         public static bool operator ==(Address obj1, Address obj2)
@@ -58,12 +82,18 @@
 
         public bool Equals(Address obj)
         {
-            return this.Value == obj.Value;
+            bool equals = true;
+            equals &= this.pn0 == obj.pn0;
+            equals &= this.pn1 == obj.pn1;
+            equals &= this.pn2 == obj.pn2;
+            equals &= this.pn3 == obj.pn3;
+            equals &= this.pn4 == obj.pn4;
+            return equals;
         }
 
         public override int GetHashCode()
         {
-            return this.Value.GetHashCode();
+            return HashCode.Combine(this.pn0, this.pn1, this.pn2, this.pn3, this.pn4);
         }
     }
 }
