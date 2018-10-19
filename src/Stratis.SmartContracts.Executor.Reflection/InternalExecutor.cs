@@ -41,7 +41,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 return CreateResult.Failed();
 
             var message = new InternalCreateMessage(
-                smartContractState.Message.ContractAddress.ToUint160(this.network),
+                smartContractState.Message.ContractAddress.ToUInt160(this.network),
                 amountToTransfer,
                 (Gas) gasBudget,
                 parameters,
@@ -83,8 +83,8 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 return TransferResult.Failed();
 
             var message = new InternalCallMessage(
-                addressTo.ToUint160(this.network),
-                smartContractState.Message.ContractAddress.ToUint160(this.network),
+                addressTo.ToUInt160(this.network),
+                smartContractState.Message.ContractAddress.ToUInt160(this.network),
                 amountToTransfer,
                 (Gas) gasBudget,
                 new MethodCall(methodName, parameters)
@@ -118,8 +118,8 @@ namespace Stratis.SmartContracts.Executor.Reflection
                 return TransferResult.Failed();
 
             var message = new ContractTransferMessage(
-                addressTo.ToUint160(this.network),
-                smartContractState.Message.ContractAddress.ToUint160(this.network),
+                addressTo.ToUInt160(this.network),
+                smartContractState.Message.ContractAddress.ToUInt160(this.network),
                 amountToTransfer,
                 (Gas) gasBudget
             );

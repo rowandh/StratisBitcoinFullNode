@@ -22,8 +22,8 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01
         };
 
-        private static Address address0 = Address.Create(address0Bytes, BytesToAddressString(address0Bytes, network));
-        private static Address address1 = Address.Create(address1Bytes, BytesToAddressString(address1Bytes, network));
+        private static Address address0 = Address.Create(BytesToAddressString(address0Bytes, network));
+        private static Address address1 = Address.Create(BytesToAddressString(address1Bytes, network));
 
         [Fact]
         public void Address_ToString()

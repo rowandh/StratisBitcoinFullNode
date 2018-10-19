@@ -81,7 +81,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             Result<IContract> contractLoadResult = this.Load(
                 code,
                 typeToInstantiate,
-                contractState.Message.ContractAddress.ToUint160(this.network),
+                contractState.Message.ContractAddress.ToUInt160(this.network),
                 contractState);
 
             if (!contractLoadResult.IsSuccess)
@@ -134,7 +134,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
             Result<IContract> contractLoadResult = this.Load(
                 code,
                 typeName,
-                contractState.Message.ContractAddress.ToUint160(this.network),
+                contractState.Message.ContractAddress.ToUInt160(this.network),
                 contractState);
 
             if (!contractLoadResult.IsSuccess)

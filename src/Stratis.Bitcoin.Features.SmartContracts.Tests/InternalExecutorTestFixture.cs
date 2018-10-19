@@ -35,7 +35,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
 
             this.SmartContractState = smartContractState;
 
-            this.FromAddress = smartContractState.Message.ContractAddress.ToUint160(this.Network);
+            this.FromAddress = smartContractState.Message.ContractAddress.ToUInt160(this.Network);
         }
 
         public uint160 FromAddress { get; }

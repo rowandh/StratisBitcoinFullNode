@@ -94,7 +94,7 @@ namespace Stratis.SmartContracts.IntegrationTests.PoW
 
             // Test that the contract address, event name, and logging values are available in the bloom.
             var scBlockHeader = lastBlock.Header as SmartContractBlockHeader;
-            Assert.True(scBlockHeader.LogsBloom.Test(response.NewContractAddress.ToUint160(this.mockChain.Network).ToBytes()));
+            Assert.True(scBlockHeader.LogsBloom.Test(response.NewContractAddress.ToUInt160(this.mockChain.Network).ToBytes()));
             Assert.True(scBlockHeader.LogsBloom.Test(Encoding.UTF8.GetBytes("Log")));
             Assert.True(scBlockHeader.LogsBloom.Test(this.serializer.Serialize(testChar)));
             Assert.True(scBlockHeader.LogsBloom.Test(this.serializer.Serialize(testAddress)));

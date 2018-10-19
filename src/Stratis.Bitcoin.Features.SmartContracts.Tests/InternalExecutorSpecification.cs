@@ -166,7 +166,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                     m.Method.Parameters == parameters &&
                     m.GasLimit == gasLimit &&
                     m.From == fixture.FromAddress &&
-                    m.To == to.ToUint160(fixture.Network)
+                    m.To == to.ToUInt160(fixture.Network)
                 )));
 
             fixture.State.Verify(s => s.TransitionTo(fixture.Snapshot));
@@ -213,7 +213,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                     m.Method.Parameters == parameters &&
                     m.GasLimit == gasLimit &&
                     m.From == fixture.FromAddress &&
-                    m.To == to.ToUint160(fixture.Network)
+                    m.To == to.ToUInt160(fixture.Network)
                 )));
 
             fixture.State.Verify(s => s.TransitionTo(fixture.Snapshot), Times.Never);
@@ -289,7 +289,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                     m.Amount == amount &&
                     m.GasLimit == InternalExecutor.DefaultGasLimit &&
                     m.From == fixture.FromAddress &&
-                    m.To == to.ToUint160(fixture.Network)
+                    m.To == to.ToUInt160(fixture.Network)
                 )));
 
             fixture.State.Verify(s => s.TransitionTo(fixture.Snapshot));
@@ -331,7 +331,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                     m.Amount == amount &&
                     m.GasLimit == InternalExecutor.DefaultGasLimit &&
                     m.From == fixture.FromAddress &&
-                    m.To == to.ToUint160(fixture.Network)
+                    m.To == to.ToUInt160(fixture.Network)
                 )));
 
             fixture.State.Verify(s => s.TransitionTo(fixture.Snapshot), Times.Never);

@@ -8,53 +8,24 @@ namespace Stratis.SmartContracts
     public struct Address
     {
         private readonly string addressString;
-        internal readonly uint pn0;
-        internal readonly uint pn1;
-        internal readonly uint pn2;
-        internal readonly uint pn3;
-        internal readonly uint pn4;
 
         public const int Width = 160 / 8;
 
         public Address(Address other)
-        {
-            this.pn0 = other.pn0;
-            this.pn1 = other.pn1;
-            this.pn2 = other.pn2;
-            this.pn3 = other.pn3;
-            this.pn4 = other.pn4;
+        {            
             this.addressString = other.addressString;
         }
 
-        private Address(uint pn0, uint pn1, uint pn2, uint pn3, uint pn4, string str)
+        private Address(string str)
         {
-            this.pn0 = pn0;
-            this.pn1 = pn1;
-            this.pn2 = pn2;
-            this.pn3 = pn3;
-            this.pn4 = pn4;
             this.addressString = str;
         }
         
-        internal static Address Create(byte[] bytes, string str)
+        internal static Address Create(string str)
         {
-            var pn0 = ToUInt32(bytes, 0);
-            var pn1 = ToUInt32(bytes, 4);
-            var pn2 = ToUInt32(bytes, 8);
-            var pn3 = ToUInt32(bytes, 12);
-            var pn4 = ToUInt32(bytes, 16);
-
-            return new Address(pn0, pn1, pn2, pn3, pn4, str);
+            return new Address(str);
         }
-
-        private static uint ToUInt32(byte[] value, int index)
-        {
-            return value[index]
-                   + ((uint)value[index + 1] << 8)
-                   + ((uint)value[index + 2] << 16)
-                   + ((uint)value[index + 3] << 24);
-        }
-
+        
         public override string ToString()
         {
             return this.addressString;
@@ -81,19 +52,13 @@ namespace Stratis.SmartContracts
         }
 
         public bool Equals(Address obj)
-        {
-            bool equals = true;
-            equals &= this.pn0 == obj.pn0;
-            equals &= this.pn1 == obj.pn1;
-            equals &= this.pn2 == obj.pn2;
-            equals &= this.pn3 == obj.pn3;
-            equals &= this.pn4 == obj.pn4;
-            return equals;
+        {          
+            return this.addressString == obj.addressString;
         }
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(this.pn0, this.pn1, this.pn2, this.pn3, this.pn4);
+            return HashCode.Combine(this.addressString);
         }
     }
 }

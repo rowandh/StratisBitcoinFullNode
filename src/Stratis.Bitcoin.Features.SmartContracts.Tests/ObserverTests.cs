@@ -128,7 +128,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
                 new Stratis.SmartContracts.Core.Block(1, TestAddress),
                 new Message(TestAddress, TestAddress, 0),
                 new PersistentState(new MeteredPersistenceStrategy(this.repository, this.gasMeter, new BasicKeyEncodingStrategy()),
-                    context.Serializer, TestAddress.ToUint160(this.network)),
+                    context.Serializer, TestAddress.ToUInt160(this.network)),
                 context.Serializer,
                 this.gasMeter,
                 new ContractLogHolder(this.network),
