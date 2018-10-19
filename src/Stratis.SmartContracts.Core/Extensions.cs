@@ -42,8 +42,8 @@ namespace Stratis.SmartContracts.Core
         }
 
         public static Address ToAddress(this string address, Network network)
-        {
-            return Address.Create(address);
+        {            
+            return Address.Create(new BitcoinPubKeyAddress(address, network).ToString());
         }
 
         public static Address HexToAddress(this string hexString, Network network)
