@@ -1,12 +1,11 @@
-using System;
 using Xunit;
 
 namespace Stratis.SmartContracts.Wasm.Tests
 {
-    public class UnitTest1
+    public class WasmExecutorSpecification
     {
         [Fact]
-        public void Test1()
+        public void VM_Execute_Success()
         {
 
         }
