@@ -5,10 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="WebAssembly" Version="0.3.4-preview" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Stratis.SmartContracts.Core\Stratis.SmartContracts.Core.csproj" />
   </ItemGroup>
 

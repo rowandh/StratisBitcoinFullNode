@@ -150,7 +150,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stratis.SmartContracts.Toke
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stratis.SmartContracts.Wasm", "Stratis.SmartContracts.Wasm\Stratis.SmartContracts.Wasm.csproj", "{06591DB6-5BE9-4B19-8E75-8A25900AC4DC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stratis.SmartContracts.Wasm.Tests", "Stratis.SmartContracts.Wasm.Tests\Stratis.SmartContracts.Wasm.Tests.csproj", "{EE73F971-04B9-4C7D-A254-D246867C224C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stratis.SmartContracts.Wasm.Tests", "Stratis.SmartContracts.Wasm.Tests\Stratis.SmartContracts.Wasm.Tests.csproj", "{EE73F971-04B9-4C7D-A254-D246867C224C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebAssembly", "Wasm\WebAssembly\WebAssembly.csproj", "{1B7180EB-3650-4C6A-9561-2C824DC40F21}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -406,6 +408,10 @@ Global
 		{EE73F971-04B9-4C7D-A254-D246867C224C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EE73F971-04B9-4C7D-A254-D246867C224C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EE73F971-04B9-4C7D-A254-D246867C224C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1B7180EB-3650-4C6A-9561-2C824DC40F21}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1B7180EB-3650-4C6A-9561-2C824DC40F21}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1B7180EB-3650-4C6A-9561-2C824DC40F21}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1B7180EB-3650-4C6A-9561-2C824DC40F21}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -464,6 +470,7 @@ Global
 		{BC66C49F-CEF4-421A-B4EC-129158FEEDF1} = {EAE139C2-B19C-4905-9117-8A4068ABD3D2}
 		{06591DB6-5BE9-4B19-8E75-8A25900AC4DC} = {1B9A916F-DDAC-4675-B424-EDEDC1A58231}
 		{EE73F971-04B9-4C7D-A254-D246867C224C} = {EAE139C2-B19C-4905-9117-8A4068ABD3D2}
+		{1B7180EB-3650-4C6A-9561-2C824DC40F21} = {1B9A916F-DDAC-4675-B424-EDEDC1A58231}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6C780ABA-5872-4B83-AD3F-A5BD423AD907}
