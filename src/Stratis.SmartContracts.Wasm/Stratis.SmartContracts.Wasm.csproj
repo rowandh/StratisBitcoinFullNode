@@ -4,4 +4,8 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="WebAssembly" Version="0.3.4-preview" />
+  </ItemGroup>
+
 </Project>
