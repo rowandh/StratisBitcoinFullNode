@@ -45,7 +45,7 @@ namespace Stratis.SmartContracts.IntegrationTests.PoW
             Assert.True(compilationResult.Success);
 
             const char testChar = 'c';
-            Address testAddress = "0x0000000000000000000000000000000000000001".HexToAddress(this.mockChain.Network);
+            Address testAddress = "0x0000000000000000000000000000000000000001".HexToAddress();
             const bool testBool = true;
             const int testInt = Int32.MaxValue;
             const long testLong = Int64.MaxValue;
@@ -142,7 +142,7 @@ namespace Stratis.SmartContracts.IntegrationTests.PoW
             uint256 currentHash = this.node1.GetLastBlock().GetHash();
 
             const char testChar = 'c';
-            Address testAddress = "0x0000000000000000000000000000000000000001".HexToAddress(this.mockChain.Network);
+            Address testAddress = "0x0000000000000000000000000000000000000001".HexToAddress();
             const bool testBool = true;
             const int testInt = Int32.MaxValue;
             const long testLong = Int64.MaxValue;
@@ -206,7 +206,7 @@ namespace Stratis.SmartContracts.IntegrationTests.PoW
             uint256 currentHash = this.node1.GetLastBlock().GetHash();
 
             const char testChar = 'c';
-            Address testAddress = "0x0000000000000000000000000000000000000001".HexToAddress(this.mockChain.Network);
+            Address testAddress = "0x0000000000000000000000000000000000000001".HexToAddress();
             const bool testBool = true;
             const int testInt = Int32.MaxValue;
             const long testLong = Int64.MaxValue;
