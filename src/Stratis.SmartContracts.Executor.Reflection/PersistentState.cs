@@ -24,6 +24,16 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
         internal ISerializer Serializer { get; }
 
+        public byte[] GetBytes(byte[] key)
+        {
+            return this.persistenceStrategy.FetchBytes(this.ContractAddress, key);
+        }
+
+        public void SetBytes(byte[] key, byte[] value)
+        {
+            this.persistenceStrategy.StoreBytes(this.ContractAddress, key, value);
+        }
+
         public bool IsContract(Address address)
         {
             byte[] serialized = this.Serializer.Serialize(address);

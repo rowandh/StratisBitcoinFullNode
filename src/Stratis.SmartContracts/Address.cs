@@ -1,5 +1,76 @@
-﻿namespace Stratis.SmartContracts
+﻿using System;
+using System.Collections.Generic;
+
+namespace Stratis.SmartContracts
 {
+    //public class Mapping<TValue>
+    //{
+    //    private IPersistentState state;
+
+    //    public Mapping(IPersistentState state)
+    //    {
+    //        this.state = state;
+    //    }
+
+    //    public TValue this[string key]
+    //    {
+    //        get
+    //        {
+    //            return this.state.GetBytes(key);
+    //        }
+    //    }
+
+    //    public TValue Value { get; }
+    //}
+
+    public struct ScArray
+    {
+        private IPersistentState state;
+        private IInternalHashHelper hasher;
+        private ISerializer serializer;
+        private byte[] slot;
+
+        private ScArray(byte[] slot, ISerializer serializer, IPersistentState state, IInternalHashHelper hasher)
+        {
+            this.slot = slot;
+            this.state = state;
+            this.hasher = hasher;
+            this.serializer = serializer;
+        }
+
+        public static ScArray Wrap(string name, SmartContract contract)
+        {
+            var slot = contract.Hasher.Keccak256(contract.Serializer.Serialize(name));
+            return new ScArray(slot, contract.Serializer, contract.PersistentState, contract.Hasher);
+        }
+
+        public byte[] this[uint index]
+        {
+            get
+            {
+                var indexBytes = this.serializer.Serialize(index);
+                var newBytes = new byte[this.slot.Length + indexBytes.Length];
+                Buffer.BlockCopy(this.slot, 0, newBytes, 0, this.slot.Length);
+                Buffer.BlockCopy(indexBytes, 0, newBytes, this.slot.Length, indexBytes.Length);
+                
+                return this.state.GetBytes(this.hasher.Keccak256(newBytes));
+            }
+            set
+            {
+                var indexBytes = this.serializer.Serialize(index);
+                var newBytes = new byte[this.slot.Length + indexBytes.Length];
+                Buffer.BlockCopy(this.slot, 0, newBytes, 0, this.slot.Length);
+                Buffer.BlockCopy(indexBytes, 0, newBytes, this.slot.Length, indexBytes.Length);
+
+                var length = this.Length + 1;
+                this.state.SetBytes(this.slot, this.serializer.Serialize(length));
+                this.state.SetBytes(this.hasher.Keccak256(newBytes), value);
+            }
+        }
+
+        public uint Length => this.serializer.ToUInt32(this.state.GetBytes(this.slot));
+    }
+
     /// <summary>
     /// Helper struct that represents a STRAT address and is used when sending or receiving funds.
     /// <para>
@@ -22,7 +93,7 @@
         }
 
         public override string ToString()
-        {
+        {           
             return this.Value;
         }
 

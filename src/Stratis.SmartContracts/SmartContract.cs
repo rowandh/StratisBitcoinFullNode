@@ -40,6 +40,8 @@ namespace Stratis.SmartContracts
         /// </summary>
         public ISerializer Serializer => this.state.Serializer;
 
+        public IInternalHashHelper Hasher => this.state.InternalHashHelper;
+
         /// <summary>
         /// The current state of the blockchain and current transaction.
         /// </summary>

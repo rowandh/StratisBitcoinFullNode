@@ -30,6 +30,7 @@ namespace Stratis.SmartContracts.Core.Validation
             }
 
             policy
+                .Type(typeof(Func<,>).Name, AccessPolicy.Allowed)
                 .Type(typeof(Array).Name, AccessPolicy.Denied,
                     m => m.Member(nameof(Array.GetLength), AccessPolicy.Allowed)
                             .Member(nameof(Array.Copy), AccessPolicy.Allowed)
@@ -54,7 +55,8 @@ namespace Stratis.SmartContracts.Core.Validation
         private static void SmartContractsPolicy(NamespacePolicy policy)
         {
             policy
-                .Type(typeof(SmartContract), AccessPolicy.Allowed);
+                .Type(typeof(SmartContract), AccessPolicy.Allowed)
+                .Type(typeof(ScArray), AccessPolicy.Allowed);
         }
     }
 }

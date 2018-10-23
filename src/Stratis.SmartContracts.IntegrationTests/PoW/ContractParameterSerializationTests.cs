@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Text;
 using NBitcoin;
 using Stratis.Bitcoin.Features.SmartContracts;
@@ -310,6 +311,75 @@ namespace Stratis.SmartContracts.IntegrationTests.PoW
             Assert.Equal(this.serializer.Serialize(uints), this.node1.GetStorageValue(response.NewContractAddress, "uints"));
             Assert.Equal(this.serializer.Serialize(ulongs), this.node1.GetStorageValue(response.NewContractAddress, "ulongs"));
             Assert.Equal(this.serializer.Serialize(strings), this.node1.GetStorageValue(response.NewContractAddress, "strings"));
+
+            // Receipt is correct
+            ReceiptResponse receipt = this.node1.GetReceipt(response.TransactionId.ToString());
+            Assert.Equal(lastBlock.GetHash().ToString(), receipt.BlockHash);
+            Assert.Equal(response.TransactionId.ToString(), receipt.TransactionHash);
+            Assert.True(receipt.Success);
+            Assert.Empty(receipt.Logs);
+            Assert.True(receipt.GasUsed > GasPriceList.BaseCost);
+            Assert.Equal(response.NewContractAddress, receipt.NewContractAddress);
+            Assert.Equal(this.node1.MinerAddress.Address, receipt.From);
+            Assert.Null(receipt.To);
+            Assert.Null(receipt.Error);
+        }
+
+        [Fact]
+        public void ByteArrayTest()
+        {
+            // Ensure fixture is funded.
+            this.node1.MineBlocks(1);
+
+            double amount = 25;
+            uint256 currentHash = this.node1.GetLastBlock().GetHash();
+
+            ContractCompilationResult compilationResult = ContractCompiler.CompileFile("SmartContracts/ArrayTest.cs");
+            Assert.True(compilationResult.Success);
+
+            BuildCreateContractTransactionResponse response = this.node1.SendCreateContractTransaction(compilationResult.Compilation, amount, null);
+            this.node2.WaitMempoolCount(1);
+            this.node2.MineBlocks(1);
+            Block lastBlock = this.node1.GetLastBlock();
+
+            // Blocks progressed
+            Assert.NotEqual(currentHash, lastBlock.GetHash());
+
+            // Contract was created
+            Assert.NotNull(this.node1.GetCode(response.NewContractAddress));
+
+            // Block doesn't contain any extra transactions
+            Assert.Equal(2, lastBlock.Transactions.Count);
+
+            // Contract keeps balance
+            Assert.Equal((ulong)new Money((ulong)amount, MoneyUnit.BTC), this.node1.GetContractBalance(response.NewContractAddress));
+
+            string[] parameters = new string[] { string.Format("{0}#{1}", (int)MethodParameterDataType.UInt, 1) };
+
+            BuildCallContractTransactionResponse callResponse = this.node1.SendCallContractTransaction(
+                "GetArrayElement", 
+                response.NewContractAddress, 
+                0,
+                parameters);
+
+            this.node2.WaitMempoolCount(1);
+            this.node2.MineBlocks(1);
+            
+            var result = this.node1.GetStorageValue(response.NewContractAddress, "result");
+
+            Assert.True(new byte[] { 0xBB }.SequenceEqual(result));
+
+            callResponse = this.node1.SendCallContractTransaction(
+                "GetLength",
+                response.NewContractAddress,
+                0);
+
+            this.node2.WaitMempoolCount(1);
+            this.node2.MineBlocks(1);
+
+            result = this.node1.GetStorageValue(response.NewContractAddress, "length");
+            
+            Assert.Equal(3U, BitConverter.ToUInt32(result));
 
             // Receipt is correct
             ReceiptResponse receipt = this.node1.GetReceipt(response.TransactionId.ToString());
