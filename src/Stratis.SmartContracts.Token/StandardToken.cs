@@ -1,4 +1,5 @@
-﻿using Stratis.SmartContracts;
+﻿using System;
+using Stratis.SmartContracts;
 using Stratis.SmartContracts.Token;
 
 /// <summary>
@@ -112,7 +113,7 @@ public class StandardToken : SmartContract, IStandardToken
 
     /// <inheritdoc />
     public uint Allowance(Address owner, Address spender)
-    {
+    {        
         return PersistentState.GetUInt32($"Allowance:{owner}:{spender}");
     }
 

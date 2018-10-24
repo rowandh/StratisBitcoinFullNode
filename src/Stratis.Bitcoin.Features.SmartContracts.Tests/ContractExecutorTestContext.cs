@@ -19,7 +19,6 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
     public class ContractExecutorTestContext
     {
         public Network Network { get; }
-        public IKeyEncodingStrategy KeyEncodingStrategy { get; }
         public ILoggerFactory LoggerFactory { get; }
         public StateRepositoryRoot State { get; }
         public SmartContractValidator Validator { get; }
@@ -36,7 +35,6 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
         public ContractExecutorTestContext()
         {
             this.Network = new SmartContractsRegTest();
-            this.KeyEncodingStrategy = BasicKeyEncodingStrategy.Default;
             this.LoggerFactory = new ExtendedLoggerFactory();
             this.LoggerFactory.AddConsoleWithFilters();
             this.State = new StateRepositoryRoot(new NoDeleteSource<byte[], byte[]>(new MemoryDictionarySource()));

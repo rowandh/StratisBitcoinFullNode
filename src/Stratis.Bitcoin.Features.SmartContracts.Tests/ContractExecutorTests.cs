@@ -24,8 +24,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
         private static readonly uint160 CoinbaseAddress = 0;
         private static readonly uint160 ToAddress = 1;
         private static readonly uint160 SenderAddress = 2;
-        private static readonly Money MempoolFee = new Money(1_000_000); 
-        private readonly IKeyEncodingStrategy keyEncodingStrategy;
+        private static readonly Money MempoolFee = new Money(1_000_000);
         private readonly ILoggerFactory loggerFactory;
         private readonly Network network;
         private readonly IContractRefundProcessor refundProcessor;
@@ -46,7 +45,6 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests
 
         public ContractExecutorTests()
         {
-            this.keyEncodingStrategy = BasicKeyEncodingStrategy.Default;
             this.loggerFactory = new ExtendedLoggerFactory();
             this.loggerFactory.AddConsoleWithFilters();
             this.network = new SmartContractsRegTest();

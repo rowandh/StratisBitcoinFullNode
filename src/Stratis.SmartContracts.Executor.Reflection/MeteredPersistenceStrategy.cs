@@ -12,17 +12,14 @@ namespace Stratis.SmartContracts.Executor.Reflection
     {
         private readonly IStateRepository stateDb;
         private readonly IGasMeter gasMeter;
-        private readonly IKeyEncodingStrategy keyEncodingStrategy;
 
-        public MeteredPersistenceStrategy(IStateRepository stateDb, IGasMeter gasMeter, IKeyEncodingStrategy keyEncodingStrategy)
+        public MeteredPersistenceStrategy(IStateRepository stateDb, IGasMeter gasMeter)
         {
             Guard.NotNull(stateDb, nameof(stateDb));
             Guard.NotNull(gasMeter, nameof(gasMeter));
-            Guard.NotNull(gasMeter, nameof(keyEncodingStrategy));
 
             this.stateDb = stateDb;
             this.gasMeter = gasMeter;
-            this.keyEncodingStrategy = keyEncodingStrategy;
         }
 
         public bool ContractExists(uint160 address)
@@ -34,10 +31,9 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
         public byte[] FetchBytes(uint160 address, byte[] key)
         {
-            byte[] encodedKey = this.keyEncodingStrategy.GetBytes(key);
-            byte[] value = this.stateDb.GetStorageValue(address, encodedKey);
+            byte[] value = this.stateDb.GetStorageValue(address, key);
 
-            Gas operationCost = GasPriceList.StorageRetrieveOperationCost(encodedKey, value);
+            Gas operationCost = GasPriceList.StorageRetrieveOperationCost(key, value);
             this.gasMeter.Spend(operationCost);
 
             return value;
@@ -45,13 +41,12 @@ namespace Stratis.SmartContracts.Executor.Reflection
 
         public void StoreBytes(uint160 address, byte[] key, byte[] value)
         {
-            byte[] encodedKey = this.keyEncodingStrategy.GetBytes(key);
             Gas operationCost = GasPriceList.StorageSaveOperationCost(
-                encodedKey,
+                key,
                 value);
 
             this.gasMeter.Spend(operationCost);
-            this.stateDb.SetStorageValue(address, encodedKey, value);
+            this.stateDb.SetStorageValue(address, key, value);
         }
     }
 }

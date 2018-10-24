@@ -30,7 +30,7 @@ namespace Stratis.SmartContracts.Executor.Reflection
         /// </summary>        
         public ISmartContractState Create(IState state, IGasMeter gasMeter, uint160 address, BaseMessage message, IStateRepository repository)
         {
-            IPersistenceStrategy persistenceStrategy = new MeteredPersistenceStrategy(repository, gasMeter, new BasicKeyEncodingStrategy());
+            IPersistenceStrategy persistenceStrategy = new MeteredPersistenceStrategy(repository, gasMeter);
 
             var persistentState = new PersistentState(persistenceStrategy, this.serializer, address);
 

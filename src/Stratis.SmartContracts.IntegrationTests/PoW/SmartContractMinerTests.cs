@@ -154,7 +154,6 @@ namespace Stratis.SmartContracts.IntegrationTests.PoW
             internal ReflectionExecutorFactory ExecutorFactory { get; private set; }
             internal string Folder { get; private set; }
             private InternalExecutorFactory internalTxExecutorFactory;
-            private IKeyEncodingStrategy keyEncodingStrategy;
             private IContractModuleDefinitionReader moduleDefinitionReader;
             private StateFactory stateFactory;
             private IContractPrimitiveSerializer primitiveSerializer;
@@ -289,8 +288,6 @@ namespace Stratis.SmartContracts.IntegrationTests.PoW
 
             private void InitializeSmartContractComponents(string callingMethod)
             {
-                this.keyEncodingStrategy = BasicKeyEncodingStrategy.Default;
-
                 this.Folder = TestBase.AssureEmptyDir(Path.Combine(AppContext.BaseDirectory, "TestCase", callingMethod));
                 var engine = new DBreezeEngine(Path.Combine(this.Folder, "contracts"));
                 var byteStore = new DBreezeByteStore(engine, "ContractState1");

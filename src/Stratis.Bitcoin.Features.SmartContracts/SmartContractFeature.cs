@@ -146,7 +146,6 @@ namespace Stratis.Bitcoin.Features.SmartContracts
                         // Executor et al.
                         services.AddSingleton<IContractRefundProcessor, ContractRefundProcessor>();
                         services.AddSingleton<IContractTransferProcessor, ContractTransferProcessor>();
-                        services.AddSingleton<IKeyEncodingStrategy, BasicKeyEncodingStrategy>();
                         services.AddSingleton<IContractExecutorFactory, ReflectionExecutorFactory>();
                         services.AddSingleton<IMethodParameterSerializer, MethodParameterByteSerializer>();
                         services.AddSingleton<IContractPrimitiveSerializer, ContractPrimitiveSerializer>();
