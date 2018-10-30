@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Stratis.ModuleValidation.Net\Stratis.ModuleValidation.Net.csproj" />
+    <ProjectReference Include="..\Stratis.SmartContracts.Standards\Stratis.SmartContracts.Standards.csproj" />
     <ProjectReference Include="..\Stratis.SmartContracts\Stratis.SmartContracts.csproj" />
   </ItemGroup>
 

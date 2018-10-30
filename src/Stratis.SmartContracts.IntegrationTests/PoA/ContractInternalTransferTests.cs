@@ -74,5 +74,49 @@ namespace Stratis.SmartContracts.IntegrationTests.PoA
             Assert.Null(receipt.Error);
             Assert.Equal(preResponse.NewContractAddress, receipt.To);
         }
+
+        [Fact]
+        public void Token_Standards_Test()
+        {
+            const uint totalSupply = 100_000;
+            // Deploy contract
+            ContractCompilationResult compilationResult = ContractCompiler.CompileFile("SmartContracts/StandardToken.cs");
+            Assert.True(compilationResult.Success);
+            string[] constructorParams = new string[] { string.Format("{0}#{1}", (int)MethodParameterDataType.UInt, totalSupply) };
+            BuildCreateContractTransactionResponse preResponse = this.node1.SendCreateContractTransaction(compilationResult.Compilation, 0, constructorParams);
+            this.node1.WaitMempoolCount(1);
+            this.node1.WaitForBlocksToBeMined(1);
+            Assert.NotNull(this.node1.GetCode(preResponse.NewContractAddress));
+
+            double amount = 0;
+
+            // Send amount to contract, which will send to wallet address (address without code)
+            uint160 walletUint160 = new uint160(1);
+            Address address = this.node1.MinerAddress.Address.ToAddress(this.mockChain.Network);
+            string[] parameters = new string[] { string.Format("{0}#{1}", (int)MethodParameterDataType.Address, address) };
+            BuildCallContractTransactionResponse response = this.node1.SendCallContractTransaction(
+                nameof(StandardToken.GetBalance),
+                preResponse.NewContractAddress,
+                amount,
+                parameters);
+            this.node2.WaitMempoolCount(1);
+            this.node2.WaitForBlocksToBeMined(1);
+
+            // Contract doesn't maintain any balance
+            Assert.Equal((ulong)0, this.node1.GetContractBalance(preResponse.NewContractAddress));
+
+            Assert.Equal(totalSupply, BitConverter.ToUInt32(this.node1.GetStorageValue(preResponse.NewContractAddress, $"Balance:{address}")));
+
+            // Receipt is correct
+            ReceiptResponse receipt = this.node1.GetReceipt(response.TransactionId.ToString());
+            Assert.Equal(response.TransactionId.ToString(), receipt.TransactionHash);
+            Assert.Empty(receipt.Logs); // TODO: Could add logs to this test
+            Assert.True(receipt.Success);
+            Assert.True(receipt.GasUsed > GasPriceList.BaseCost);
+            Assert.Null(receipt.NewContractAddress);
+            Assert.Equal(this.node1.MinerAddress.Address, receipt.From);
+            Assert.Null(receipt.Error);
+            Assert.Equal(preResponse.NewContractAddress, receipt.To);
+        }
     }
 }

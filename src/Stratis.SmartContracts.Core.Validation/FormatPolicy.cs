@@ -5,6 +5,7 @@ using Stratis.ModuleValidation.Net;
 using Stratis.ModuleValidation.Net.Format;
 using Stratis.SmartContracts.Core.Validation.Validators.Module;
 using Stratis.SmartContracts.Core.Validation.Validators.Type;
+using Stratis.SmartContracts.Standards;
 
 namespace Stratis.SmartContracts.Core.Validation
 {
@@ -22,7 +23,8 @@ namespace Stratis.SmartContracts.Core.Validation
             Runtime,
             Core,
             typeof(SmartContract).Assembly,
-            typeof(Enumerable).Assembly
+            typeof(Enumerable).Assembly,
+            typeof(IStandardToken).Assembly
         };
 
         public static ValidationPolicy Default = new ValidationPolicy()
