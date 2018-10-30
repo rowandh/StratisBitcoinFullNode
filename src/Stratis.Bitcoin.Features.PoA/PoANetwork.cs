@@ -68,9 +68,8 @@ namespace Stratis.Bitcoin.Features.PoA
             // and should be the same for all nodes operating on this network.
             var federationPublicKeys = new List<PubKey>()
             {
-                new PubKey("03e6f19ea3dc6c145d98a0e0838af952755798e5bc3950bbca4f9485aa23873d7f"),
-                new PubKey("02ddebcf18207072bdd172a25f85f2ea12e2de1d9d794f136722634aad08400fcb"),
-                new PubKey("02067b38d777690aaaf23a5b371a819e6ddc6d2aae734b0199fe59df28dc056dd7")
+                new PubKey("029528e83f065153d7fa655e73a07fc96fc759162f1e2c8936fa592f2942f39af0"),
+                new PubKey("03b539807c64abafb2d14c52a0d1858cc29d7c7fad0598f92a1274789c18d74d2d")
             };
 
             var consensusOptions = new PoAConsensusOptions(
