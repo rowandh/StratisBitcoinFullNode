@@ -19,6 +19,7 @@ using Stratis.Bitcoin.Utilities.JsonErrors;
 using Stratis.SmartContracts.Core;
 using Stratis.SmartContracts.Core.State;
 using Stratis.SmartContracts.Executor.Reflection;
+using Stratis.SmartContracts.Executor.Reflection.Local;
 
 namespace Stratis.SmartContracts.IntegrationTests.MockChain
 {
@@ -221,6 +222,38 @@ namespace Stratis.SmartContracts.IntegrationTests.MockChain
             };
             JsonResult response = (JsonResult)this.smartContractsController.BuildAndSendCallSmartContractTransaction(request);
             return (BuildCallContractTransactionResponse)response.Value;
+        }
+
+        /// <summary>
+        /// Sends a call contract transaction. Note that before this transaction can be mined it will need to reach the mempool.
+        /// You will likely want to call 'WaitMempoolCount' after this.
+        /// </summary>
+        public ILocalExecutionResult SendLocalCallContractTransaction(
+            string methodName,
+            string contractAddress,
+            double amount,
+            string[] parameters = null,
+            ulong gasLimit = SmartContractFormatRule.GasLimitMaximum / 2, // half of maximum
+            ulong gasPrice = SmartContractMempoolValidator.MinGasPrice,
+            double feeAmount = 0.01)
+        {
+            var request = new BuildCallContractTransactionRequest
+            {
+                AccountName = this.AccountName,
+                Amount = amount.ToString(),
+                ContractAddress = contractAddress,
+                FeeAmount = feeAmount.ToString(),
+                GasLimit = gasLimit.ToString(),
+                GasPrice = gasPrice.ToString(),
+                MethodName = methodName,
+                Parameters = parameters,
+                Password = this.Password,
+                Sender = this.MinerAddress.Address,
+                WalletName = this.WalletName
+            };
+
+            JsonResult response = (JsonResult)this.smartContractsController.LocalCallSmartContractTransaction(request);
+            return (ILocalExecutionResult)response.Value;
         }
 
         /// <summary>
