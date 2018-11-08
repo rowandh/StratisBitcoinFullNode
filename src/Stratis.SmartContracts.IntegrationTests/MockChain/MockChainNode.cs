@@ -253,6 +253,7 @@ namespace Stratis.SmartContracts.IntegrationTests.MockChain
             };
 
             JsonResult response = (JsonResult)this.smartContractsController.LocalCallSmartContractTransaction(request);
+            
             return (ILocalExecutionResult)response.Value;
         }
 

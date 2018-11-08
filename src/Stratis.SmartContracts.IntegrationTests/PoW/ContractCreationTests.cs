@@ -3,9 +3,12 @@ using System.Text;
 using NBitcoin;
 using Stratis.Bitcoin.Features.SmartContracts;
 using Stratis.Bitcoin.Features.SmartContracts.Models;
+using Stratis.Bitcoin.Features.SmartContracts.Networks;
 using Stratis.SmartContracts.Core;
 using Stratis.SmartContracts.Executor.Reflection;
 using Stratis.SmartContracts.Executor.Reflection.Compilation;
+using Stratis.SmartContracts.Executor.Reflection.Local;
+using Stratis.SmartContracts.Executor.Reflection.Serialization;
 using Stratis.SmartContracts.IntegrationTests.MockChain;
 using Stratis.SmartContracts.IntegrationTests.PoW.MockChain;
 using Xunit;
@@ -113,6 +116,146 @@ namespace Stratis.SmartContracts.IntegrationTests.PoW
                 Assert.Equal(expectedCreatedCatAddress, lastCreatedCatAddress);
 
                 Assert.True(BitConverter.ToBoolean(sender.GetStorageValue(response.NewContractAddress, "IsContract")));
+            }
+        }
+
+        [Fact]
+        public void Test_BaseConstructorWhileLoop()
+        {
+            using (PoWMockChain chain = new PoWMockChain(2))
+            {
+                MockChainNode sender = chain.Nodes[0];
+                MockChainNode receiver = chain.Nodes[1];
+
+                sender.MineBlocks(1);
+
+                ContractCompilationResult compilationResult = ContractCompiler.Compile(
+@"
+using Stratis.SmartContracts;
+
+public class BaseConstructorWhileLoop : SmartContract
+{
+    public BaseConstructorWhileLoop(ISmartContractState smartContractState) 
+        : base(DoNothing())
+    {
+    }
+	
+	private static ISmartContractState DoNothing()
+	{
+		while(true) {}
+	}
+}
+");
+                Assert.True(compilationResult.Success);
+
+                BuildCreateContractTransactionResponse response = sender.SendCreateContractTransaction(compilationResult.Compilation, 0);
+                receiver.WaitMempoolCount(1);
+                receiver.MineBlocks(2);
+                Assert.Null(receiver.GetCode(response.NewContractAddress));
+                Assert.Null(sender.GetCode(response.NewContractAddress));                
+            }
+        }
+
+        [Fact]
+        public void Test_BaseConstructorNull()
+        {
+            using (PoWMockChain chain = new PoWMockChain(2))
+            {
+                MockChainNode sender = chain.Nodes[0];
+                MockChainNode receiver = chain.Nodes[1];
+
+                sender.MineBlocks(1);
+
+                ContractCompilationResult compilationResult = ContractCompiler.Compile(
+                    @"
+using Stratis.SmartContracts;
+
+public class BaseConstructorNull : SmartContract
+{
+    public BaseConstructorNull(ISmartContractState smartContractState) 
+        : base(null)
+    {
+    }
+
+    public int Number()
+    {
+        var number = PersistentState.GetInt32(""Number"");
+        number++;
+        PersistentState.SetInt32(""Number"", number);
+        return number;
+    }
+}
+");
+                Assert.True(compilationResult.Success);
+
+                BuildCreateContractTransactionResponse response = sender.SendCreateContractTransaction(compilationResult.Compilation, 0);
+                receiver.WaitMempoolCount(1);
+                receiver.MineBlocks(2);
+                Assert.NotNull(receiver.GetCode(response.NewContractAddress));
+                Assert.NotNull(sender.GetCode(response.NewContractAddress));
+
+                BuildCallContractTransactionResponse callResponse = sender.SendCallContractTransaction("Number", response.NewContractAddress, 0);
+                receiver.WaitMempoolCount(1);
+                receiver.MineBlocks(1);
+
+                Assert.Equal(1, BitConverter.ToInt32(sender.GetStorageValue(response.NewContractAddress, "Number")));
+            }
+        }
+
+        [Fact]
+        public void Test_ReturnStruct()
+        {
+            using (PoWMockChain chain = new PoWMockChain(2))
+            {
+                MockChainNode sender = chain.Nodes[0];
+                MockChainNode receiver = chain.Nodes[1];
+
+                sender.MineBlocks(1);
+
+                ContractCompilationResult compilationResult = ContractCompiler.Compile(
+                    @"
+using Stratis.SmartContracts;
+
+public class ReturnStruct : SmartContract
+{
+    public struct Result
+    {
+        public int Id;
+        public string Name;
+    }
+
+    public ReturnStruct(ISmartContractState smartContractState)
+        : base(smartContractState)
+    {
+    }
+
+    public Result GetResult(int id, string name)
+    {
+        return new Result
+        {
+            Id = id,
+            Name = name
+        };
+    }
+}
+");
+                Assert.True(compilationResult.Success);
+
+                BuildCreateContractTransactionResponse response = sender.SendCreateContractTransaction(compilationResult.Compilation, 0);
+                receiver.WaitMempoolCount(1);
+                receiver.MineBlocks(2);
+                Assert.NotNull(receiver.GetCode(response.NewContractAddress));
+                Assert.NotNull(sender.GetCode(response.NewContractAddress));
+
+                var parameters = new string[]
+                {
+                    "6#1",
+                    "4#Test"
+                };
+
+                ILocalExecutionResult callResponse = sender.SendLocalCallContractTransaction("GetResult", response.NewContractAddress, 0, parameters);
+
+                Assert.NotNull(callResponse.Return);
             }
         }
     }
