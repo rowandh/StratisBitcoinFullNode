@@ -16,20 +16,23 @@ namespace Stratis.SmartContracts.Tools.ContractFuzzer
             var sb = new StringBuilder();
 
             sb.AppendLine("using Stratis.SmartContracts;");
-            sb.AppendLine("public class Contract : SmartContract");
-            sb.AppendLine("{");
-            sb.AppendLine("public Contract(ISmartContractState state) : base(state)");
-            sb.AppendLine("{");
-            sb.AppendLine("}");
+            sb.AppendLine("[Deploy]");
 
-            for (var i = 0; i < 1000; i++)
+            for (var i = 0; i < 100000; i++)
             {
-                sb.AppendLine(CreateField(NextRandom(rng, randoms)));
+
+                sb.AppendLine(CreateType(NextRandom(rng, randoms)));
+
+                //sb.AppendLine("public class Contract : SmartContract");
+                //sb.AppendLine("{");
+                //sb.AppendLine("public Contract(ISmartContractState state) : base(state)");
+                //sb.AppendLine("{");
+                //sb.AppendLine("}");
+                //sb.AppendLine("}");
+
             }
 
-            sb.AppendLine("}");
-
-            using (var sw = new StreamWriter(@"C:\Users\Rowan\Desktop\1kFields.cs"))
+            using (var sw = new StreamWriter(@"C:\Users\Rowan\Desktop\100kTypes.cs"))
             {
                 sw.Write(sb.ToString());
             }
@@ -51,6 +54,11 @@ namespace Stratis.SmartContracts.Tools.ContractFuzzer
         static string CreateField(int random)
         {
             return $"private string F{random};";
+        }
+
+        static string CreateType(int random)
+        {
+            return $"public class F{random}: SmartContract {{ public F{random}(ISmartContractState state) : base(state) {{}} }}";
         }
     }
 }
