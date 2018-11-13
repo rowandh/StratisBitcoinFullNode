@@ -50,7 +50,7 @@ namespace Stratis.SmartContracts.Core.Validation
                     results.AddRange(validator.Validate(method));
                 }
 
-                this.ValidateInstructions(results, type, method);               
+                this.ValidateInstructions(results, type, method);
             }
         }
 

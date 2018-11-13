@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using McMaster.Extensions.CommandLineUtils;
@@ -23,6 +24,10 @@ namespace Stratis.SmartContracts.Tools.Sct.Validation
         [Option("-sb|--showbytes", CommandOptionType.NoValue,
             Description = "Show contract compilation bytes")]
         public bool ShowBytes { get; }
+
+        [Option("-wb|--writebytes", CommandOptionType.NoValue,
+            Description = "Write contract compilation bytes. The file written will be name [FILE].cil")]
+        public bool WriteBytes { get; }
 
         private int OnExecute(CommandLineApplication app)
         {
@@ -146,10 +151,10 @@ namespace Stratis.SmartContracts.Tools.Sct.Validation
             reportStructure.Add(new HeaderSection());
             reportStructure.Add(new CompilationSection());
 
-            reportStructure.Add(new FormatSection());
-            reportStructure.Add(new DeterminismSection());
+            //reportStructure.Add(new FormatSection());
+            //reportStructure.Add(new DeterminismSection());
 
-            reportStructure.Add(new WarningsSection());
+            //reportStructure.Add(new WarningsSection());
 
             if (this.ShowBytes)
                 reportStructure.Add(new ByteCodeSection());
@@ -161,7 +166,20 @@ namespace Stratis.SmartContracts.Tools.Sct.Validation
             foreach (ValidationReportData data in reportData)
             {
                 renderer.Render(reportStructure, data);
+
+                if (this.WriteBytes)
+                {
+                    var fn = Path.ChangeExtension(data.FileName, ".cil");
+
+                    using (var sw = new StreamWriter(fn))
+                    {
+                        sw.Write(data.CompilationBytes.ToHexString());
+                    }
+                }
             }
+
+            if (Debugger.IsAttached)
+                Console.ReadLine();
 
             return 1;
         }

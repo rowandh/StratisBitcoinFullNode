@@ -1,4 +1,6 @@
-﻿using McMaster.Extensions.CommandLineUtils;
+﻿using System;
+using System.Diagnostics;
+using McMaster.Extensions.CommandLineUtils;
 using Stratis.SmartContracts.Tools.Sct.Build;
 using Stratis.SmartContracts.Tools.Sct.Deployment;
 using Stratis.SmartContracts.Tools.Sct.Validation;
