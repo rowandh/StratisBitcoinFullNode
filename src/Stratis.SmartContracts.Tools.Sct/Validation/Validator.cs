@@ -25,8 +25,7 @@ namespace Stratis.SmartContracts.Tools.Sct.Validation
             Description = "Show contract compilation bytes")]
         public bool ShowBytes { get; }
 
-        [Option("-wb|--writebytes", CommandOptionType.NoValue,
-            Description = "Write contract compilation bytes. The file written will be name [FILE].cil")]
+        [Option("-wb|--writebytes", CommandOptionType.NoValue, Description = "Write contract compilation bytes. The file written will be name [FILE].cil")]
         public bool WriteBytes { get; }
 
         private int OnExecute(CommandLineApplication app)
@@ -167,7 +166,7 @@ namespace Stratis.SmartContracts.Tools.Sct.Validation
             {
                 renderer.Render(reportStructure, data);
 
-                if (this.WriteBytes)
+                if (this.WriteBytes && data.DeterminismValid && data.FormatValid)
                 {
                     var fn = Path.ChangeExtension(data.FileName, ".cil");
 

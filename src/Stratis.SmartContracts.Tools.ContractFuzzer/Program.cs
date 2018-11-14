@@ -15,24 +15,27 @@ namespace Stratis.SmartContracts.Tools.ContractFuzzer
 
             var sb = new StringBuilder();
 
-            sb.AppendLine("using Stratis.SmartContracts;");
-            sb.AppendLine("[Deploy]");
+            sb.Append("using Stratis.SmartContracts;");
+            sb.Append("[Deploy]");
+            sb.Append($"public class F: SmartContract {{ public F(ISmartContractState state):base(state){{var s = new S();}}");
+            sb.Append(CreateLargeStruct());
+            sb.Append("}");
 
-            for (var i = 0; i < 100000; i++)
-            {
+            //for (var i = 0; i < 100000; i++)
+            //{
 
-                sb.AppendLine(CreateType(NextRandom(rng, randoms)));
+            //    sb.AppendLine(CreateType(NextRandom(rng, randoms)));
 
-                //sb.AppendLine("public class Contract : SmartContract");
-                //sb.AppendLine("{");
-                //sb.AppendLine("public Contract(ISmartContractState state) : base(state)");
-                //sb.AppendLine("{");
-                //sb.AppendLine("}");
-                //sb.AppendLine("}");
+            //    //sb.AppendLine("public class Contract : SmartContract");
+            //    //sb.AppendLine("{");
+            //    //sb.AppendLine("public Contract(ISmartContractState state) : base(state)");
+            //    //sb.AppendLine("{");
+            //    //sb.AppendLine("}");
+            //    //sb.AppendLine("}");
 
-            }
+            //}
 
-            using (var sw = new StreamWriter(@"C:\Users\Rowan\Desktop\100kTypes.cs"))
+            using (var sw = new StreamWriter(@"C:\Users\Games\Desktop\LargeStruct.cs"))
             {
                 sw.Write(sb.ToString());
             }
@@ -60,5 +63,24 @@ namespace Stratis.SmartContracts.Tools.ContractFuzzer
         {
             return $"public class F{random}: SmartContract {{ public F{random}(ISmartContractState state) : base(state) {{}} }}";
         }
+
+        static string CreateLargeStruct()
+        {
+            var sb = new StringBuilder();
+            HashSet<int> randoms = new HashSet<int>();
+
+            var rng = new Random();
+            sb.Append("struct S{");
+
+            while (Encoding.ASCII.GetBytes(sb.ToString()).Length < 50000)
+            {
+                sb.Append($"ulong F{NextRandom(rng, randoms)};");
+            }
+
+            sb.Append("}");
+
+            return sb.ToString();
+        }
+
     }
 }

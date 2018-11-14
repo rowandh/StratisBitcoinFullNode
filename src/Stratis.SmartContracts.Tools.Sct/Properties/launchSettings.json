@@ -2,7 +2,7 @@
   "profiles": {
     "Stratis.SmartContracts.Tools.Sct": {
       "commandName": "Project",
-      "commandLineArgs": "validate \"C:\\Users\\Rowan\\Desktop\\100kTypes.cs\" -wb"
+      "commandLineArgs": "validate \"C:\\Users\\Games\\Desktop\\ConstructorInfiniteLoop.cs\" -wb"
     }
   }
 }
