@@ -44,7 +44,6 @@ namespace Stratis.FederatedPeg.IntegrationTests
             }
         }
 
-
         [Fact]
         public void Nodes_Can_Connect()
         {
