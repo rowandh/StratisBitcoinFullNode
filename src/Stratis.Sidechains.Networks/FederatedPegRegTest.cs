@@ -25,7 +25,7 @@ namespace Stratis.Sidechains.Networks
         // public IList<Mnemonic> FederationMnemonics { get; }
         public IList<Key> FederationKeys { get; private set; }
 
-        internal FederatedPegRegTest()
+        public FederatedPegRegTest()
         {
             this.Name = FederatedPegNetwork.RegTestNetworkName;
             this.CoinTicker = FederatedPegNetwork.TestCoinSymbol;

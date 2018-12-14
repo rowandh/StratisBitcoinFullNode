@@ -368,7 +368,9 @@ namespace Stratis.Bitcoin.IntegrationTests.Common
                     thisNode.CreateRPCClient().AddNode(connectToNode.Endpoint, true);
                     return true;
                 }
-                catch (Exception) { }
+                catch (Exception e)
+                {
+                }
 
                 return false;
             }, retryDelayInMiliseconds: 5000, cancellationToken: cancellation.Token);

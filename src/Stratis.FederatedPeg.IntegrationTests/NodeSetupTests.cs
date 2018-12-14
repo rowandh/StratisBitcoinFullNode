@@ -1,9 +1,12 @@
+using System.IO;
 using System.Linq;
 using FluentAssertions;
 using NBitcoin;
 using Stratis.Bitcoin.IntegrationTests.Common;
 using Stratis.Bitcoin.IntegrationTests.Common.EnvironmentMockUpHelpers;
+using Stratis.FederatedPeg.Features.FederationGateway;
 using Stratis.FederatedPeg.IntegrationTests.Utils;
+using Stratis.Sidechains.Networks;
 using Xunit;
 
 namespace Stratis.FederatedPeg.IntegrationTests
@@ -59,6 +62,33 @@ namespace Stratis.FederatedPeg.IntegrationTests
             Assert.Single(coinbase.Outputs);
             Assert.Equal(node.FullNode.Network.Consensus.PremineReward, coinbase.Outputs[0].Value);
             Assert.Equal(this.scriptAndAddresses.payToMultiSig.PaymentScript, coinbase.Outputs[0].ScriptPubKey);
+        }
+
+        [Fact]
+        public void Nodes()
+        {
+            var sidechainNodeBuilder = SidechainNodeBuilder.CreateSidechainNodeBuilder(this);
+
+            var fedNode = sidechainNodeBuilder.CreateSidechainFederationNode(new FederatedPegRegTest(), this.sidechainNetwork.FederationKeys[0]);
+            var sideNode = sidechainNodeBuilder.CreateSidechainNode(new FederatedPegRegTest());
+
+            this.AppendToConfig(fedNode, $"sidechain=1");
+            this.AppendToConfig(fedNode, $"{FederationGatewaySettings.RedeemScriptParam}={this.scriptAndAddresses.payToMultiSig.ToString()}");
+            this.AppendToConfig(fedNode, $"{FederationGatewaySettings.PublicKeyParam}={this.pubKeysByMnemonic[this.mnemonics[0]].ToString()}");
+
+            fedNode.Start();
+            sideNode.Start();
+
+            // Try swapping these 2 around - WTF
+            TestHelper.Connect(sideNode, fedNode);
+        }
+
+        private void AppendToConfig(CoreNode node, string configKeyValueIten)
+        {
+            using (StreamWriter sw = File.AppendText(node.Config))
+            {
+                sw.WriteLine(configKeyValueIten);
+            }
         }
     }
 }
