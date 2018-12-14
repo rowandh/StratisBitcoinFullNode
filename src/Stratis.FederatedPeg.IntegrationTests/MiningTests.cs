@@ -1,15 +1,11 @@
-using System;
 using System.Linq;
-
 using NBitcoin;
-
 using Stratis.Bitcoin.Features.PoA;
 using Stratis.Bitcoin.Features.PoA.IntegrationTests.Common;
 using Stratis.Bitcoin.Features.Wallet.Interfaces;
 using Stratis.Bitcoin.IntegrationTests.Common;
 using Stratis.Bitcoin.IntegrationTests.Common.EnvironmentMockUpHelpers;
 using Stratis.Sidechains.Networks;
-
 using Xunit;
 
 namespace Stratis.FederatedPeg.IntegrationTests
@@ -52,7 +48,7 @@ namespace Stratis.FederatedPeg.IntegrationTests
                 node0.EnableFastMining();
                 node1.EnableFastMining();
 
-                var tipBefore = node0.GetTip().Height;
+                int tipBefore = node0.GetTip().Height;
                 TestHelper.WaitLoop(
                     () =>
                         {
@@ -73,7 +69,7 @@ namespace Stratis.FederatedPeg.IntegrationTests
                 CoreNode node = builder.CreatePoANode(network, network.FederationKeys[0]).WithWallet("pass", walletName).Start();
                 node.EnableFastMining();
 
-                IWalletManager walletManager = node.FullNode.NodeService<IWalletManager>();
+                var walletManager = node.FullNode.NodeService<IWalletManager>();
                 long balanceOnStart = walletManager.GetBalances(walletName, "account 0").Sum(x => x.AmountConfirmed);
                 Assert.Equal(0, balanceOnStart);
 

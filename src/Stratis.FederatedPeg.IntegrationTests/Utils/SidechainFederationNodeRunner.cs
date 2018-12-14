@@ -6,17 +6,21 @@ using Stratis.Bitcoin.Features.Api;
 using Stratis.Bitcoin.Features.BlockStore;
 using Stratis.Bitcoin.Features.MemoryPool;
 using Stratis.Bitcoin.Features.Notifications;
+using Stratis.Bitcoin.Features.PoA.IntegrationTests.Common;
 using Stratis.Bitcoin.Features.RPC;
 using Stratis.Bitcoin.Features.SmartContracts;
 using Stratis.Bitcoin.Features.SmartContracts.Wallet;
+using Stratis.Bitcoin.Features.Wallet;
+using Stratis.Bitcoin.IntegrationTests.Common;
 using Stratis.Bitcoin.IntegrationTests.Common.Runners;
+using Stratis.Bitcoin.Utilities;
 using Stratis.FederatedPeg.Features.FederationGateway;
 
 namespace Stratis.FederatedPeg.IntegrationTests.Utils
 {
-    public class SidechainWithSmartContractsNodeRunner : NodeRunner
+    public class SidechainFederationNodeRunner : NodeRunner
     {
-        public SidechainWithSmartContractsNodeRunner(string dataDir, string agent, Network network)
+        public SidechainFederationNodeRunner(string dataDir, string agent, Network network)
             : base(dataDir, agent)
         {
             this.Network = network;
@@ -35,10 +39,12 @@ namespace Stratis.FederatedPeg.IntegrationTests.Utils
                 .AddFederationGateway()
                 .UseFederatedPegPoAMining()
                 .UseMempool()
+                .UseWallet()
                 .UseTransactionNotification()
                 .UseBlockNotification()
                 .UseApi()
                 .AddRPC()
+                .MockIBD()
                 .Build();
         }
     }

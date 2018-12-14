@@ -21,10 +21,10 @@ namespace Stratis.FederatedPeg.Features.FederationGateway
             this.network = network;
         }
 
-        ///<inheritdoc />
-        public string TryGetTargetAddress(Transaction transaction)
+        /// <inheritdoc />
+        public bool TryGetTargetAddress(Transaction transaction, out string address)
         {
-            var opReturnAddresses = SelectBytesContentFromOpReturn(transaction)
+            List<string> opReturnAddresses = SelectBytesContentFromOpReturn(transaction)
                 .Select(this.TryConvertValidOpReturnDataToAddress)
                 .Where(s => s != null)
                 .Distinct(StringComparer.InvariantCultureIgnoreCase).ToList();
@@ -32,13 +32,20 @@ namespace Stratis.FederatedPeg.Features.FederationGateway
             this.logger.LogDebug("Address(es) found in OP_RETURN(s) of transaction {0}: [{1}]",
                 transaction.GetHash(), string.Join(",", opReturnAddresses));
 
-            return opReturnAddresses.Count != 1 ? null : opReturnAddresses[0];
+            if (opReturnAddresses.Count != 1)
+            {
+                address = null;
+                return false;
+            }
+
+            address = opReturnAddresses[0];
+            return true;
         }
 
         /// <inheritdoc />
-        public string TryGetTransactionId(Transaction transaction)
+        public bool TryGetTransactionId(Transaction transaction, out string txId)
         {
-            var transactionId = SelectBytesContentFromOpReturn(transaction)
+            List<string> transactionId = SelectBytesContentFromOpReturn(transaction)
                 .Select(this.TryConvertValidOpReturnDataToHash)
                 .Where(s => s != null)
                 .Distinct(StringComparer.InvariantCultureIgnoreCase).ToList();
@@ -46,7 +53,14 @@ namespace Stratis.FederatedPeg.Features.FederationGateway
             this.logger.LogDebug("Transaction Id(s) found in OP_RETURN(s) of transaction {0}: [{1}]",
                 transaction.GetHash(), string.Join(",", transactionId));
 
-            return transactionId.Count != 1 ? null : transactionId[0];
+            if (transactionId.Count != 1)
+            {
+                txId = null;
+                return false;
+            }
+
+            txId = transactionId[0];
+            return true;
         }
 
         private static IEnumerable<byte[]> SelectBytesContentFromOpReturn(Transaction transaction)
@@ -68,13 +82,13 @@ namespace Stratis.FederatedPeg.Features.FederationGateway
             // Attempt to parse the string. Validates the base58 string.
             try
             {
-                var bitcoinAddress = network.ToCounterChainNetwork().Parse<BitcoinAddress>(destination);
-                logger.LogTrace($"ConvertValidOpReturnDataToAddress received {destination} and network.Parse received {bitcoinAddress}.");
+                var bitcoinAddress = this.network.ToCounterChainNetwork().Parse<BitcoinAddress>(destination);
+                this.logger.LogTrace($"ConvertValidOpReturnDataToAddress received {destination} and network.Parse received {bitcoinAddress}.");
                 return destination;
             }
             catch (Exception ex)
             {
-                logger.LogTrace($"Address {destination} could not be converted to a valid address. Reason {ex.Message}.");
+                this.logger.LogTrace($"Address {destination} could not be converted to a valid address. Reason {ex.Message}.");
                 return null;
             }
         }
@@ -85,12 +99,12 @@ namespace Stratis.FederatedPeg.Features.FederationGateway
             try
             {
                 var hash256 = new uint256(data);
-                logger.LogTrace($"ConvertValidOpReturnDataToHash received {hash256}.");
+                this.logger.LogTrace($"ConvertValidOpReturnDataToHash received {hash256}.");
                 return hash256.ToString();
             }
             catch (Exception ex)
             {
-                logger.LogTrace($"Candidate hash {data} could not be converted to a valid uint256. Reason {ex.Message}.");
+                this.logger.LogTrace($"Candidate hash {data} could not be converted to a valid uint256. Reason {ex.Message}.");
                 return null;
             }
         }

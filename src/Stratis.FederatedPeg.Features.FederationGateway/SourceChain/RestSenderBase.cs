@@ -35,7 +35,7 @@ namespace Stratis.FederatedPeg.Features.FederationGateway.SourceChain
             var publicationUri = new Uri(
                 $"http://localhost:{this.targetApiPort}/api/FederationGateway/{route}");
 
-            using (var client = this.httpClientFactory.CreateClient())
+            using (HttpClient client = this.httpClientFactory.CreateClient())
             {
                 var sendModel = (T)model;
                 var request = new JsonContent(sendModel);
@@ -50,7 +50,8 @@ namespace Stratis.FederatedPeg.Features.FederationGateway.SourceChain
                 catch (Exception ex)
                 {
                     this.backOffUntil = DateTime.Now.AddSeconds(10);
-                    this.logger.LogError(ex, "Failed to send {0}", model);
+                    this.logger.LogError("The counter-chain daemon is not ready to receive API calls at this time ({0})", publicationUri);
+                    this.logger.LogDebug(ex, "Failed to send {0}", model);
                     return new HttpResponseMessage() { ReasonPhrase = ex.Message, StatusCode = HttpStatusCode.InternalServerError };
                 }
             }

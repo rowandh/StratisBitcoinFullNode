@@ -103,8 +103,8 @@ namespace Stratis.FederatedPeg.Features.FederationGateway.Wallet
         /// </summary>
         public (Money ConfirmedAmount, Money UnConfirmedAmount) GetSpendableAmount()
         {
-            var confirmed = this.MultiSigAddress.Transactions.Sum(t => t.SpendableAmount(true));
-            var total = this.MultiSigAddress.Transactions.Sum(t => t.SpendableAmount(false));
+            long confirmed = this.MultiSigAddress.Transactions.Sum(t => t.SpendableAmount(true));
+            long total = this.MultiSigAddress.Transactions.Sum(t => t.SpendableAmount(false));
 
             return (confirmed, total - confirmed);
         }
@@ -118,15 +118,15 @@ namespace Stratis.FederatedPeg.Features.FederationGateway.Wallet
             // Find the transaction(s) in the MultiSigAddress that have the
             // referenced inputs among their outputs.
 
-            List<Transaction> fundingTransactions = new List<Transaction>();
+            var fundingTransactions = new List<Transaction>();
 
             foreach (TransactionData tx in this.MultiSigAddress.Transactions)
             {
                 Transaction trx = tx.GetFullTransaction(this.Network);
 
-                foreach (var output in trx.Outputs.AsIndexedOutputs())
+                foreach (IndexedTxOut output in trx.Outputs.AsIndexedOutputs())
                 {
-                    foreach (var input in partial.Inputs)
+                    foreach (TxIn input in partial.Inputs)
                     {
                         if (input.PrevOut.Hash == tx.Id && input.PrevOut.N == output.N)
                             fundingTransactions.Add(trx);
@@ -136,11 +136,11 @@ namespace Stratis.FederatedPeg.Features.FederationGateway.Wallet
 
             // Then convert the outputs to Coins & make ScriptCoins out of them.
 
-            List<ScriptCoin> scriptCoins = new List<ScriptCoin>();
+            var scriptCoins = new List<ScriptCoin>();
 
-            foreach (var tx in fundingTransactions)
+            foreach (Transaction tx in fundingTransactions)
             {
-                foreach (var coin in tx.Outputs.AsCoins())
+                foreach (Coin coin in tx.Outputs.AsCoins())
                 {
                     // Only care about outputs for our particular multisig
                     if (coin.ScriptPubKey == this.MultiSigAddress.ScriptPubKey)
@@ -153,7 +153,7 @@ namespace Stratis.FederatedPeg.Features.FederationGateway.Wallet
             // Need to construct a transaction using a transaction builder with
             // the appropriate state
 
-            TransactionBuilder builder = new TransactionBuilder(this.Network);
+            var builder = new TransactionBuilder(this.Network);
 
             Transaction signed = builder
                 .AddCoins(scriptCoins)
@@ -174,14 +174,14 @@ namespace Stratis.FederatedPeg.Features.FederationGateway.Wallet
             // Find the transaction(s) in the MultiSigAddress that have the
             // referenced inputs among their outputs.
 
-            List<Transaction> fundingTransactions = new List<Transaction>();
+            var fundingTransactions = new List<Transaction>();
 
             foreach (TransactionData tx in this.MultiSigAddress.Transactions)
             {
                 Transaction trx = tx.GetFullTransaction(this.Network);
-                foreach (var output in trx.Outputs.AsIndexedOutputs())
+                foreach (IndexedTxOut output in trx.Outputs.AsIndexedOutputs())
                 {
-                    foreach (var input in firstPartial.Inputs)
+                    foreach (TxIn input in firstPartial.Inputs)
                     {
                         if (input.PrevOut.Hash == tx.Id && input.PrevOut.N == output.N)
                             fundingTransactions.Add(trx);
@@ -191,11 +191,11 @@ namespace Stratis.FederatedPeg.Features.FederationGateway.Wallet
 
             // Then convert the outputs to Coins & make ScriptCoins out of them.
 
-            List<ScriptCoin> scriptCoins = new List<ScriptCoin>();
+            var scriptCoins = new List<ScriptCoin>();
 
-            foreach (var tx in fundingTransactions)
+            foreach (Transaction tx in fundingTransactions)
             {
-                foreach (var coin in tx.Outputs.AsCoins())
+                foreach (Coin coin in tx.Outputs.AsCoins())
                 {
                     // Only care about outputs for our particular multisig
                     if (coin.ScriptPubKey == this.MultiSigAddress.ScriptPubKey)
@@ -208,7 +208,7 @@ namespace Stratis.FederatedPeg.Features.FederationGateway.Wallet
             // Need to construct a transaction using a transaction builder with
             // the appropriate state
 
-            TransactionBuilder builder = new TransactionBuilder(this.Network);
+            var builder = new TransactionBuilder(this.Network);
 
             Transaction combined =
                 builder

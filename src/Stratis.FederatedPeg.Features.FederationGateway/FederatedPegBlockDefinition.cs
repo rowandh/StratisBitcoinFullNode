@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using NBitcoin;
+
+using Stratis.Bitcoin.Configuration;
 using Stratis.Bitcoin.Consensus;
 using Stratis.Bitcoin.Features.Consensus.CoinViews;
 using Stratis.Bitcoin.Features.MemoryPool;
@@ -11,7 +13,6 @@ using Stratis.Bitcoin.Utilities;
 using Stratis.SmartContracts.Core;
 using Stratis.SmartContracts.Core.State;
 using Stratis.SmartContracts.Core.Util;
-using Script = NBitcoin.Script;
 
 namespace Stratis.FederatedPeg.Features.FederationGateway
 {
@@ -34,16 +35,17 @@ namespace Stratis.FederatedPeg.Features.FederationGateway
             Network network,
             ISenderRetriever senderRetriever,
             IStateRepositoryRoot stateRoot,
-            IFederationGatewaySettings federationGatewaySettings)
-            : base(blockBufferGenerator, coinView, consensusManager, dateTimeProvider, executorFactory, loggerFactory, mempool, mempoolLock, network, senderRetriever, stateRoot)
+            NodeSettings nodeSettings)
+            : base(blockBufferGenerator, coinView, consensusManager, dateTimeProvider, executorFactory, loggerFactory, mempool, mempoolLock, network, senderRetriever, stateRoot, nodeSettings)
         {
+            var federationGatewaySettings = new FederationGatewaySettings(nodeSettings);
             this.payToMultisigScript = federationGatewaySettings.MultiSigAddress.ScriptPubKey;
             this.payToMemberScript = PayToPubkeyTemplate.Instance.GenerateScriptPubKey(new PubKey(federationGatewaySettings.PublicKey));
         }
 
         public override BlockTemplate Build(ChainedHeader chainTip, Script scriptPubKey)
         {
-            var rewardScript = (chainTip.Height + 1) == this.Network.Consensus.PremineHeight 
+            Script rewardScript = (chainTip.Height + 1) == this.Network.Consensus.PremineHeight 
                                    ? this.payToMultisigScript 
                                    : this.payToMemberScript;
 

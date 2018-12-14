@@ -1,18 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using FluentAssertions;
-using NBitcoin;
-using Stratis.Bitcoin.Features.PoA.IntegrationTests.Common;
-using Stratis.Bitcoin.Features.Wallet.Interfaces;
+﻿using NBitcoin;
 using Stratis.Bitcoin.IntegrationTests.Common;
 using Stratis.Bitcoin.IntegrationTests.Common.EnvironmentMockUpHelpers;
-using Stratis.FederatedPeg.Features.FederationGateway;
-using Stratis.FederatedPeg.Features.FederationGateway.Interfaces;
 using Stratis.FederatedPeg.IntegrationTests.Utils;
-using Stratis.Sidechains.Networks;
 using Xunit;
 
 namespace Stratis.FederatedPeg.IntegrationTests
@@ -43,24 +32,6 @@ namespace Stratis.FederatedPeg.IntegrationTests
                 Assert.Equal(node.FullNode.Network.Consensus.PremineReward, coinbase.Outputs[0].Value);
                 Assert.Equal(this.scriptAndAddresses.payToMultiSig.PaymentScript, coinbase.Outputs[0].ScriptPubKey);
             }
-        }
-
-        [Fact]
-        public void Premine_Received_To_Federation_New()
-        {
-            this.StartAndConnectNodes();
-
-            CoreNode node = this.MainAndSideChainNodeMap["fedSide1"].Node;
-
-            // Wait for node to reach premine height 
-            TestHelper.WaitLoop(() => node.FullNode.Chain.Height == node.FullNode.Network.Consensus.PremineHeight);
-
-            // Ensure that coinbase contains premine reward and it goes to the fed.
-            Block block = node.FullNode.Chain.Tip.Block;
-            Transaction coinbase = block.Transactions[0];
-            Assert.Single(coinbase.Outputs);
-            Assert.Equal(node.FullNode.Network.Consensus.PremineReward, coinbase.Outputs[0].Value);
-            Assert.Equal(this.scriptAndAddresses.payToMultiSig.PaymentScript, coinbase.Outputs[0].ScriptPubKey);
         }
 
 

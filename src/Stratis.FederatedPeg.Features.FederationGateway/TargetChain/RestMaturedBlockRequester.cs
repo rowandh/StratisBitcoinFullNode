@@ -1,5 +1,4 @@
-﻿using System;
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -14,8 +13,8 @@ namespace Stratis.FederatedPeg.Features.FederationGateway.TargetChain
     {
         public const int MaxBlocksToCatchup = 1000;
 
-        private ICrossChainTransferStore crossChainTransferStore;
-        private IMaturedBlockReceiver maturedBlockReceiver;
+        private readonly ICrossChainTransferStore crossChainTransferStore;
+        private readonly IMaturedBlockReceiver maturedBlockReceiver;
 
         public RestMaturedBlockRequester(
             ILoggerFactory loggerFactory,
@@ -55,7 +54,7 @@ namespace Stratis.FederatedPeg.Features.FederationGateway.TargetChain
                 string successJson = response.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
                 if (successJson != null)
                 {
-                    MaturedBlockDepositsModel[] blockDeposits = JsonConvert.DeserializeObject<MaturedBlockDepositsModel[]>(successJson);
+                    var blockDeposits = JsonConvert.DeserializeObject<MaturedBlockDepositsModel[]>(successJson);
 
                     if (blockDeposits.Length > 0)
                     {

@@ -79,7 +79,7 @@ namespace Stratis.FederatedPeg.Features.FederationGateway.Wallet
                 // a common fork and bringing the wallet back to a good
                 // state (behind the best chain).
                 ICollection<uint256> locators = this.walletManager.GetWallet().BlockLocator;
-                BlockLocator blockLocator = new BlockLocator { Blocks = locators.ToList() };
+                var blockLocator = new BlockLocator { Blocks = locators.ToList() };
                 ChainedHeader fork = this.chain.FindFork(blockLocator);
                 this.walletManager.RemoveBlocks(fork);
                 this.walletManager.WalletTipHash = fork.HashBlock;
@@ -146,7 +146,7 @@ namespace Stratis.FederatedPeg.Features.FederationGateway.Wallet
                         return;
                     }
 
-                    var token = this.nodeLifetime.ApplicationStopping;
+                    CancellationToken token = this.nodeLifetime.ApplicationStopping;
                     this.logger.LogTrace("Wallet tip '{0}' is behind the new tip '{1}'.", this.walletTip, newTip);
 
                     ChainedHeader next = this.walletTip;
@@ -160,14 +160,16 @@ namespace Stratis.FederatedPeg.Features.FederationGateway.Wallet
                         // The block should be put in a queue and pushed to the wallet in an async way.
                         // If the wallet is behind it will just read blocks from store (or download in case of a pruned node).
 
-                        token.ThrowIfCancellationRequested();
-
                         next = newTip.GetAncestor(next.Height + 1);
                         Block nextblock = null;
                         int index = 0;
                         while (true)
                         {
-                            token.ThrowIfCancellationRequested();
+                            if (token.IsCancellationRequested)
+                            {
+                                this.logger.LogTrace("(-)[CANCELLATION_REQUESTED]");
+                                return;
+                            }
 
                             nextblock = this.blockStore.GetBlockAsync(next.HashBlock).GetAwaiter().GetResult();
                             if (nextblock == null)
