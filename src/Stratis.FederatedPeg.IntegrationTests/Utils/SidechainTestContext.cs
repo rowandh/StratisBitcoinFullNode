@@ -28,6 +28,7 @@ namespace Stratis.FederatedPeg.IntegrationTests.Utils
         private const string WalletName = "mywallet";
         private const string WalletPassword = "password";
         private const string WalletPassphrase = "passphrase";
+        private const string WalletAccount = "account 0";
         private const string ConfigSideChain = "sidechain";
         private const string ConfigMainChain = "mainchain";
         private const string ConfigAgentPrefix = "agentprefix";
@@ -80,7 +81,7 @@ namespace Stratis.FederatedPeg.IntegrationTests.Utils
             this.FedMain2 = this.nodeBuilder.CreateMainChainFederationNode(this.MainChainNetwork);
             this.FedMain3 = this.nodeBuilder.CreateMainChainFederationNode(this.MainChainNetwork);
 
-            this.SideUser = this.nodeBuilder.CreateSidechainNode(this.SideChainNetwork);
+            this.SideUser = this.nodeBuilder.CreateSidechainNode(this.SideChainNetwork).WithWallet();
 
             this.FedSide1 = this.nodeBuilder.CreateSidechainFederationNode(this.SideChainNetwork, this.SideChainNetwork.FederationKeys[0]);
             this.FedSide2 = this.nodeBuilder.CreateSidechainFederationNode(this.SideChainNetwork, this.SideChainNetwork.FederationKeys[1]);
@@ -241,8 +242,8 @@ namespace Stratis.FederatedPeg.IntegrationTests.Utils
                 .PostJsonAsync(new
                 {
                     walletName = WalletName,
-                    accountName = "account 0",
-                    password =  WalletPassphrase,
+                    accountName = WalletAccount,
+                    password =  WalletPassword,
                     opReturnData = sidechainDepositAddress,
                     feeAmount = "0.01",
                     recipients = new[]
@@ -270,7 +271,7 @@ namespace Stratis.FederatedPeg.IntegrationTests.Utils
 
         public string GetAddress(CoreNode node)
         {
-            return node.FullNode.WalletManager().GetUnusedAddress(new WalletAccountReference(WalletName, "account 0"))
+            return node.FullNode.WalletManager().GetUnusedAddress(new WalletAccountReference(WalletName, WalletAccount))
                 .Address;
         }
 
