@@ -27,9 +27,9 @@ namespace Stratis.FederatedPeg.Features.FederationGateway.TargetChain
         public IObservable<ILeaderProvider> LeaderProvidersStream { get; }
 
         /// <inheritdoc />
-        public void ReceiveLeader(ILeaderProvider leaderProvider)
+        public void PushLeader(ILeaderProvider leaderProvider)
         {
-            this.logger.LogDebug("Received federated leader: {0}.", leaderProvider.CurrentLeaderKey);
+            this.logger.LogInformation("Received federated leader: {0}.", leaderProvider.CurrentLeaderKey);
             this.leaderProvidersStream.OnNext(leaderProvider);
         }
 

@@ -30,13 +30,13 @@ namespace Stratis.FederatedPeg.IntegrationTests.Utils
 
         public CoreNode CreateSidechainNode(Network network)
         {
-            string agentName = $"sidechain{Interlocked.Increment(ref agentCount)}";
+            string agentName = $"sideuser{Interlocked.Increment(ref agentCount)}";
             return this.CreateNode(new SidechainUserNodeRunner(this.GetNextDataFolderName(agentName), agentName, network), "poa.conf");
         }
 
         public CoreNode CreateSidechainFederationNode(Network network, Key key)
         {
-            string agentName = $"sidechain{Interlocked.Increment(ref agentCount)}";
+            string agentName = $"sidefed{Interlocked.Increment(ref agentCount)}";
             string dataFolder = this.GetNextDataFolderName(agentName);
             CoreNode node = this.CreateNode(new SidechainFederationNodeRunner(dataFolder, agentName, network), "poa.conf");
 
@@ -47,15 +47,11 @@ namespace Stratis.FederatedPeg.IntegrationTests.Utils
             return node;
         }
 
-        public CoreNode CreateSidechainNodeWithSmartContracts(Network network, Key key)
+        public CoreNode CreateMainChainFederationNode(Network network)
         {
-            string agentName = $"sidechain{Interlocked.Increment(ref agentCount)}";
+            string agentName = $"mainfed{Interlocked.Increment(ref agentCount)}";
             string dataFolder = this.GetNextDataFolderName(agentName);
-            CoreNode node = this.CreateNode(new SidechainWithSmartContractsNodeRunner(dataFolder, agentName, network), "poa.conf");
-
-            var settings = new NodeSettings(network, args: new string[] { "-conf=poa.conf", "-datadir=" + dataFolder });
-            var tool = new KeyTool(settings.DataFolder);
-            tool.SavePrivateKey(key);
+            CoreNode node = this.CreateNode(new MainChainFederationNodeRunner(dataFolder, agentName, network), "stratis.conf");
 
             return node;
         }

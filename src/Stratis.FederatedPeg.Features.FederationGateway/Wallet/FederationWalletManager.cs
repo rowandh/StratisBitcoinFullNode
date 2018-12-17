@@ -525,6 +525,25 @@ namespace Stratis.FederatedPeg.Features.FederationGateway.Wallet
             return updatedWallet;
         }
 
+        /// <inheritdoc />
+        public HashSet<(uint256, DateTimeOffset)> RemoveAllTransactions()
+        {
+            var removedTransactions = new HashSet<(uint256, DateTimeOffset)>();
+
+            lock (this.lockObject)
+            {
+                removedTransactions = this.Wallet.MultiSigAddress.Transactions.Select(t => (t.Id, t.CreationTime)).ToHashSet();
+                this.Wallet.MultiSigAddress.Transactions.Clear();
+            }
+
+            if (removedTransactions.Any())
+            {
+                this.SaveWallet();
+            }
+
+            return removedTransactions;
+        }
+
         /// <summary>
         /// Adds a transaction that credits the wallet with new coins.
         /// This method is can be called many times for the same transaction (idempotent).
@@ -864,7 +883,7 @@ namespace Stratis.FederatedPeg.Features.FederationGateway.Wallet
                 // All the input UTXO's should be present in spending details of the multi-sig address.
                 List<Coin> coins = checkSignature ? new List<Coin>() : null;
                 // Verify that the transaction has valid UTXOs.
-                if (!TransactionHasValidUTXOs(transaction, coins))
+                if (!this.TransactionHasValidUTXOs(transaction, coins))
                     return false;
 
                 // Verify that there are no earlier unspent UTXOs.
@@ -883,6 +902,11 @@ namespace Stratis.FederatedPeg.Features.FederationGateway.Wallet
                     TransactionBuilder builder = new TransactionBuilder(this.Wallet.Network).AddCoins(coins);
                     if (!builder.Verify(transaction, this.federationGatewaySettings.TransactionFee, out TransactionPolicyError[] errors))
                     {
+                        foreach (TransactionPolicyError transactionPolicyError in errors)
+                        {
+                            this.logger.LogError("TransactionBuilder.Verify FAILED - {0}", transactionPolicyError.ToString());
+                        }
+
                         return false;
                     }
                 }
