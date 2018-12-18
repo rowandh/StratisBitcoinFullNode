@@ -66,8 +66,7 @@ namespace Stratis.FederatedPeg.Features.FederationGateway
                 .Select(a => a.ToIPEndPoint(nodeSettings.Network.DefaultPort)) ?? new List<IPEndPoint>();
 
             //todo : remove that for prod code
-            this.MinimumDepositConfirmations = 5;
-            // this.MinimumDepositConfirmations = (uint)configReader.GetOrDefault<int>(MinimumDepositConfirmationsParam, (int)nodeSettings.Network.Consensus.MaxReorgLength + 1);
+            this.MinimumDepositConfirmations = (uint)configReader.GetOrDefault<int>(MinimumDepositConfirmationsParam, (int)nodeSettings.Network.Consensus.MaxReorgLength + 1);
             //this.MinimumDepositConfirmations = nodeSettings.Network.Consensus.MaxReorgLength + 1;
         }
 
