@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -236,19 +237,26 @@ namespace Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor.Controllers
         [HttpPost]
         public IActionResult BuildAndSendCreateSmartContractTransaction([FromBody] BuildCreateContractTransactionRequest request)
         {
-            if (!this.ModelState.IsValid)
-                return ModelStateErrors.BuildErrorResponse(this.ModelState);
+            try
+            {
+                if (!this.ModelState.IsValid)
+                    return ModelStateErrors.BuildErrorResponse(this.ModelState);
 
-            BuildCreateContractTransactionResponse response = this.smartContractTransactionService.BuildCreateTx(request);
+                BuildCreateContractTransactionResponse response = this.smartContractTransactionService.BuildCreateTx(request);
 
-            if (!response.Success)
+                if (!response.Success)
+                    return Json(response);
+
+                Transaction transaction = this.network.CreateTransaction(response.Hex);
+                this.walletManager.ProcessTransaction(transaction, null, null, false);
+                this.broadcasterManager.BroadcastTransactionAsync(transaction).GetAwaiter().GetResult();
+
                 return Json(response);
-
-            Transaction transaction = this.network.CreateTransaction(response.Hex);
-            this.walletManager.ProcessTransaction(transaction, null, null, false);
-            this.broadcasterManager.BroadcastTransactionAsync(transaction).GetAwaiter().GetResult();
-
-            return Json(response);
+            }
+            catch (Exception e)
+            {
+                return Json(e);
+            }
         }
 
         [Route("build-and-send-call")]

@@ -29,14 +29,14 @@ namespace Stratis.FederatedPeg.IntegrationTests
 
             // Send create contract tx
             byte[] contractCode = ContractCompiler.CompileFile("SmartContracts/BasicTransfer.cs").Compilation;
-            BuildCreateContractTransactionResponse createResponse = await this.context.SendCreateContractTransaction(this.context.SideUser, contractCode, 1, fundedAddress);
+            string newContractAddress = await this.context.SendCreateContractTransaction(this.context.SideUser, contractCode, 1, fundedAddress);
 
             // Block is mined
             int currentHeight = this.context.SideUser.FullNode.Chain.Height;
             TestHelper.WaitLoop(() => this.context.SideUser.FullNode.Chain.Height >= currentHeight + 1);
 
             // Contract code is stored as expected
-            Assert.NotNull(this.context.GetContractCode(this.context.SideUser, createResponse.NewContractAddress));
+            Assert.NotNull(this.context.GetContractCode(this.context.SideUser, newContractAddress));
         }
     }
 }

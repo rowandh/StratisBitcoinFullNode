@@ -11,6 +11,7 @@ using Flurl;
 using Flurl.Http;
 using NBitcoin;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Stratis.Bitcoin.Features.SmartContracts;
 using Stratis.Bitcoin.Features.SmartContracts.Models;
 using Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor.Consensus.Rules;
@@ -304,7 +305,7 @@ namespace Stratis.FederatedPeg.IntegrationTests.Utils
                 });
         }
 
-        public async Task<BuildCreateContractTransactionResponse> SendCreateContractTransaction(CoreNode node, 
+        public async Task<string> SendCreateContractTransaction(CoreNode node, 
             byte[] contractCode,
             double amount,
             string sender,
@@ -330,7 +331,7 @@ namespace Stratis.FederatedPeg.IntegrationTests.Utils
                 });
 
             string result = await createContractResponse.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<BuildCreateContractTransactionResponse>(result);
+            return JObject.Parse(result)["newContractAddress"].ToString();
         }
 
         public string GetUnusedAddress(CoreNode node)
