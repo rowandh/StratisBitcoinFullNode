@@ -1,32 +1,39 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using FluentAssertions;
+using Flurl;
+using Flurl.Http;
+using NBitcoin;
 using Newtonsoft.Json;
+using Stratis.Bitcoin.Features.SmartContracts;
+using Stratis.Bitcoin.Features.SmartContracts.Models;
+using Stratis.Bitcoin.Features.SmartContracts.ReflectionExecutor.Consensus.Rules;
+using Stratis.Bitcoin.Features.Wallet;
 using Stratis.Bitcoin.Features.Wallet.Models;
+using Stratis.Bitcoin.IntegrationTests.Common;
+using Stratis.Bitcoin.IntegrationTests.Common.EnvironmentMockUpHelpers;
+using Stratis.Bitcoin.Networks;
+using Stratis.FederatedPeg.Features.FederationGateway;
+using Stratis.FederatedPeg.Features.FederationGateway.Models;
+using Stratis.Sidechains.Networks;
+using Stratis.SmartContracts.CLR;
+using Stratis.SmartContracts.Core;
+using Stratis.SmartContracts.Core.State;
 
 namespace Stratis.FederatedPeg.IntegrationTests.Utils
 {
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Linq;
-    using System.Net;
-    using FluentAssertions;
-    using Flurl;
-    using Flurl.Http;
-    using NBitcoin;
-    using Stratis.Bitcoin.IntegrationTests.Common;
-    using Stratis.Bitcoin.IntegrationTests.Common.EnvironmentMockUpHelpers;
-    using Stratis.Bitcoin.Networks;
-    using Stratis.FederatedPeg.Features.FederationGateway;
-    using Stratis.FederatedPeg.Features.FederationGateway.Models;
-    using Stratis.Sidechains.Networks;
-
     public class SidechainTestContext : IDisposable
     {
         private const string WalletName = "mywallet";
         private const string WalletPassword = "password";
         private const string WalletPassphrase = "passphrase";
+        private const string WalletAccount = "account 0";
         private const string ConfigSideChain = "sidechain";
         private const string ConfigMainChain = "mainchain";
         private const string ConfigAgentPrefix = "agentprefix";
@@ -74,12 +81,12 @@ namespace Stratis.FederatedPeg.IntegrationTests.Utils
 
             this.nodeBuilder = SidechainNodeBuilder.CreateSidechainNodeBuilder(this);
 
-            this.MainUser = this.nodeBuilder.CreateStratisPosNode(this.MainChainNetwork, nameof(this.MainUser)).WithWallet(); // TODO: Do we need wallets like this on every node?
-            this.FedMain1 = this.nodeBuilder.CreateMainChainFederationNode(this.MainChainNetwork);
+            this.MainUser = this.nodeBuilder.CreateStratisPosNode(this.MainChainNetwork, nameof(this.MainUser)).WithWallet();
+            this.FedMain1 = this.nodeBuilder.CreateMainChainFederationNode(this.MainChainNetwork).WithWallet();
             this.FedMain2 = this.nodeBuilder.CreateMainChainFederationNode(this.MainChainNetwork);
             this.FedMain3 = this.nodeBuilder.CreateMainChainFederationNode(this.MainChainNetwork);
 
-            this.SideUser = this.nodeBuilder.CreateSidechainNode(this.SideChainNetwork);
+            this.SideUser = this.nodeBuilder.CreateSidechainNode(this.SideChainNetwork).WithWallet();
 
             this.FedSide1 = this.nodeBuilder.CreateSidechainFederationNode(this.SideChainNetwork, this.SideChainNetwork.FederationKeys[0]);
             this.FedSide2 = this.nodeBuilder.CreateSidechainFederationNode(this.SideChainNetwork, this.SideChainNetwork.FederationKeys[1]);
@@ -240,8 +247,8 @@ namespace Stratis.FederatedPeg.IntegrationTests.Utils
                 .PostJsonAsync(new
                 {
                     walletName = WalletName,
-                    accountName = "account 0",
-                    password =  WalletPassphrase,
+                    accountName = WalletAccount,
+                    password =  WalletPassword,
                     opReturnData = sidechainDepositAddress,
                     feeAmount = "0.01",
                     recipients = new[]
@@ -257,14 +264,103 @@ namespace Stratis.FederatedPeg.IntegrationTests.Utils
             string result = await depositTransaction.Content.ReadAsStringAsync();
             WalletBuildTransactionModel walletBuildTxModel = JsonConvert.DeserializeObject<WalletBuildTransactionModel>(result);
 
-            HttpResponseMessage sendTransaction = await $"http://localhost:{node.ApiPort}/api"
+            HttpResponseMessage sendTransactionResponse = await $"http://localhost:{node.ApiPort}/api"
                 .AppendPathSegment("wallet/send-transaction")
                 .PostJsonAsync(new
                 {
                     hex = walletBuildTxModel.Hex
                 });
+        }
 
-            // TODO: Check transaction sent without errors
+        public async Task WithdrawToMainChain(CoreNode node, decimal amount, string mainchainWithdrawAddress)
+        {
+            HttpResponseMessage withdrawTransaction = await $"http://localhost:{node.ApiPort}/api"
+                .AppendPathSegment("wallet/build-transaction")
+                .PostJsonAsync(new
+                {
+                    walletName = WalletName,
+                    accountName = WalletAccount,
+                    password = WalletPassword,
+                    opReturnData = mainchainWithdrawAddress,
+                    feeAmount = "0.01",
+                    recipients = new[]
+                    {
+                        new
+                        {
+                            destinationAddress = this.scriptAndAddresses.sidechainMultisigAddress.ToString(),
+                            amount = amount
+                        }
+                    }
+                });
+
+            string result = await withdrawTransaction.Content.ReadAsStringAsync();
+            WalletBuildTransactionModel walletBuildTxModel = JsonConvert.DeserializeObject<WalletBuildTransactionModel>(result);
+
+            HttpResponseMessage sendTransactionResponse = await $"http://localhost:{node.ApiPort}/api"
+                .AppendPathSegment("wallet/send-transaction")
+                .PostJsonAsync(new
+                {
+                    hex = walletBuildTxModel.Hex
+                });
+        }
+
+        public async Task<BuildCreateContractTransactionResponse> SendCreateContractTransaction(CoreNode node, 
+            byte[] contractCode,
+            double amount,
+            string sender,
+            string[] parameters = null,
+            ulong gasLimit = SmartContractFormatRule.GasLimitMaximum / 2, // half of maximum
+            ulong gasPrice = SmartContractMempoolValidator.MinGasPrice,
+            double feeAmount = 0.01)
+        {
+            HttpResponseMessage createContractResponse = await $"http://localhost:{node.ApiPort}/api"
+                .AppendPathSegment("SmartContracts/build-and-send-create")
+                .PostJsonAsync(new
+                {
+                    amount = amount.ToString(),
+                    accountName = WalletAccount,
+                    contractCode = contractCode.ToHexString(),
+                    feeAmount = feeAmount.ToString(),
+                    gasLimit = gasLimit,
+                    gasPrice = gasPrice,
+                    parameters = parameters,
+                    password = WalletPassword,
+                    Sender = sender,
+                    walletName = WalletName
+                });
+
+            string result = await createContractResponse.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<BuildCreateContractTransactionResponse>(result);
+        }
+
+        public string GetUnusedAddress(CoreNode node)
+        {
+            return node.FullNode.WalletManager().GetUnusedAddress(new WalletAccountReference(WalletName, WalletAccount)).Address;
+        }
+
+        public IList<AddressBalance> GetAddressBalances(CoreNode node)
+        {
+            IEnumerable<IGrouping<HdAddress, UnspentOutputReference>> allSpendable = node.FullNode.WalletManager().GetSpendableTransactionsInWallet(WalletName).GroupBy(x => x.Address);
+            var result = new List<AddressBalance>();
+            foreach (IGrouping<HdAddress, UnspentOutputReference> grouping in allSpendable)
+            {
+                result.Add(new AddressBalance
+                {
+                    Address = grouping.Key.Address,
+                    Balance = grouping.Sum(x => x.Transaction.SpendableAmount(false))
+                });
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Note this is only going to work on smart contract enabled (aka sidechain) nodes
+        /// </summary>
+        public byte[] GetContractCode(CoreNode node, string address)
+        {
+            IStateRepositoryRoot stateRoot = node.FullNode.NodeService<IStateRepositoryRoot>();
+            return stateRoot.GetCode(address.ToUint160(this.SideChainNetwork));
         }
 
         private void ApplyFederationIPs(CoreNode fed1, CoreNode fed2, CoreNode fed3)
@@ -300,6 +396,22 @@ namespace Stratis.FederatedPeg.IntegrationTests.Utils
             this.AppendToConfig(this.FedMain1, $"{ConfigMainChain}=1");
             this.AppendToConfig(this.FedMain2, $"{ConfigMainChain}=1");
             this.AppendToConfig(this.FedMain3, $"{ConfigMainChain}=1");
+
+            this.AppendToConfig(this.FedSide1, $"mindepositconfirmations=5");
+            this.AppendToConfig(this.FedSide2, $"mindepositconfirmations=5");
+            this.AppendToConfig(this.FedSide3, $"mindepositconfirmations=5");
+
+            this.AppendToConfig(this.FedMain1, $"mindepositconfirmations=5");
+            this.AppendToConfig(this.FedMain2, $"mindepositconfirmations=5");
+            this.AppendToConfig(this.FedMain3, $"mindepositconfirmations=5");
+
+            this.AppendToConfig(this.FedSide1, $"mincoinmaturity=5");
+            this.AppendToConfig(this.FedSide2, $"mincoinmaturity=5");
+            this.AppendToConfig(this.FedSide3, $"mincoinmaturity=5");
+
+            this.AppendToConfig(this.FedMain1, $"mincoinmaturity=5");
+            this.AppendToConfig(this.FedMain2, $"mincoinmaturity=5");
+            this.AppendToConfig(this.FedMain3, $"mincoinmaturity=5");
 
             this.AppendToConfig(this.FedSide1, $"{FederationGatewaySettings.RedeemScriptParam}={this.scriptAndAddresses.payToMultiSig.ToString()}");
             this.AppendToConfig(this.FedSide2, $"{FederationGatewaySettings.RedeemScriptParam}={this.scriptAndAddresses.payToMultiSig.ToString()}");
