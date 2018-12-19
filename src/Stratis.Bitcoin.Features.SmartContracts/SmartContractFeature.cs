@@ -84,7 +84,6 @@ namespace Stratis.Bitcoin.Features.SmartContracts
 
                         // CONSENSUS ------------------------------------------------------------------------
                         services.AddSingleton<IMempoolValidator, SmartContractMempoolValidator>();
-                        services.AddSingleton<StandardTransactionPolicy, SmartContractTransactionPolicy>();
 
                         // CONTRACT EXECUTION ---------------------------------------------------------------
                         services.AddSingleton<IInternalExecutorFactory, InternalExecutorFactory>();
