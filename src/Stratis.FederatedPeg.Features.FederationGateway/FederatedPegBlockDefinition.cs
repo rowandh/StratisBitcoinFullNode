@@ -20,7 +20,7 @@ namespace Stratis.FederatedPeg.Features.FederationGateway
     {
         private readonly Script payToMultisigScript;
 
-        // private readonly Script payToMemberScript;
+        private readonly Script payToMemberScript;
 
         /// <inheritdoc />
         public FederatedPegBlockDefinition(
@@ -40,16 +40,16 @@ namespace Stratis.FederatedPeg.Features.FederationGateway
         {
             var federationGatewaySettings = new FederationGatewaySettings(nodeSettings);
             this.payToMultisigScript = federationGatewaySettings.MultiSigAddress.ScriptPubKey;
-            // this.payToMemberScript = PayToPubkeyTemplate.Instance.GenerateScriptPubKey(new PubKey(federationGatewaySettings.PublicKey));
+            this.payToMemberScript = PayToPubkeyTemplate.Instance.GenerateScriptPubKey(new PubKey(federationGatewaySettings.PublicKey));
         }
 
         public override BlockTemplate Build(ChainedHeader chainTip, Script scriptPubKey)
         {
             //Script rewardScript = (chainTip.Height + 1) == this.Network.Consensus.PremineHeight 
             //                       ? this.payToMultisigScript 
-            //                       : scriptPubKey;
+            //                       : this.payToMemberScript;
 
-            return base.Build(chainTip, scriptPubKey);
+            return base.Build(chainTip,  scriptPubKey);
         }
     }
 }

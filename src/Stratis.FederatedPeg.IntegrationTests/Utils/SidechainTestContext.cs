@@ -26,7 +26,6 @@ using Stratis.Sidechains.Networks;
 using Stratis.SmartContracts.CLR;
 using Stratis.SmartContracts.Core;
 using Stratis.SmartContracts.Core.State;
-
 namespace Stratis.FederatedPeg.IntegrationTests.Utils
 {
     public class SidechainTestContext : IDisposable
@@ -58,15 +57,15 @@ namespace Stratis.FederatedPeg.IntegrationTests.Utils
         public IReadOnlyList<CoreNode> MainChainFedNodes { get; }
         public IReadOnlyList<CoreNode> SideChainFedNodes { get; }
 
-        //public CoreNode MainUser{ get; }
+        public CoreNode MainUser{ get; }
         public CoreNode FedMain1 { get; }
-        //public CoreNode FedMain2 { get; }
-        // public CoreNode FedMain3 { get; }
+        public CoreNode FedMain2 { get; }
+        public CoreNode FedMain3 { get; }
 
         public CoreNode SideUser { get; }
         public CoreNode FedSide1 { get; }
-        //public CoreNode FedSide2 { get; }
-        //public CoreNode FedSide3 { get; }
+        public CoreNode FedSide2 { get; }
+        public CoreNode FedSide3 { get; }
 
         public SidechainTestContext()
         {
@@ -82,45 +81,45 @@ namespace Stratis.FederatedPeg.IntegrationTests.Utils
 
             this.nodeBuilder = SidechainNodeBuilder.CreateSidechainNodeBuilder(this);
 
-            //this.MainUser = this.nodeBuilder.CreateStratisPosNode(this.MainChainNetwork, nameof(this.MainUser)).WithWallet();
+            this.MainUser = this.nodeBuilder.CreateStratisPosNode(this.MainChainNetwork, nameof(this.MainUser)).WithWallet();
             this.FedMain1 = this.nodeBuilder.CreateMainChainFederationNode(this.MainChainNetwork).WithWallet();
-            //this.FedMain2 = this.nodeBuilder.CreateMainChainFederationNode(this.MainChainNetwork);
-            //this.FedMain3 = this.nodeBuilder.CreateMainChainFederationNode(this.MainChainNetwork);
+            this.FedMain2 = this.nodeBuilder.CreateMainChainFederationNode(this.MainChainNetwork);
+            this.FedMain3 = this.nodeBuilder.CreateMainChainFederationNode(this.MainChainNetwork);
 
             this.SideUser = this.nodeBuilder.CreateSidechainNode(this.SideChainNetwork).WithWallet();
 
-            this.FedSide1 = this.nodeBuilder.CreateSidechainFederationNode(this.SideChainNetwork, this.SideChainNetwork.FederationKeys[0]).WithWallet();
-            //this.FedSide2 = this.nodeBuilder.CreateSidechainFederationNode(this.SideChainNetwork, this.SideChainNetwork.FederationKeys[1]).WithWallet();
-            //this.FedSide3 = this.nodeBuilder.CreateSidechainFederationNode(this.SideChainNetwork, this.SideChainNetwork.FederationKeys[2]).WithWallet();
+            this.FedSide1 = this.nodeBuilder.CreateSidechainFederationNode(this.SideChainNetwork, this.SideChainNetwork.FederationKeys[0]);
+            this.FedSide2 = this.nodeBuilder.CreateSidechainFederationNode(this.SideChainNetwork, this.SideChainNetwork.FederationKeys[1]);
+            this.FedSide3 = this.nodeBuilder.CreateSidechainFederationNode(this.SideChainNetwork, this.SideChainNetwork.FederationKeys[2]);
 
             this.SideChainNodes = new List<CoreNode>()
             {
                 this.SideUser,
                 this.FedSide1,
-                //this.FedSide2,
-                //this.FedSide3
+                this.FedSide2,
+                this.FedSide3
             };
 
             this.MainChainNodes = new List<CoreNode>()
             {
-                //this.MainUser,
+                this.MainUser,
                 this.FedMain1,
-                //this.FedMain2,
-                //this.FedMain3,
+                this.FedMain2,
+                this.FedMain3,
             };
 
             this.SideChainFedNodes = new List<CoreNode>()
             {
                 this.FedSide1,
-                //this.FedSide2,
-                //this.FedSide3
+                this.FedSide2,
+                this.FedSide3
             };
 
             this.MainChainFedNodes = new List<CoreNode>()
             {
                 this.FedMain1,
-                //this.FedMain2,
-                //this.FedMain3
+                this.FedMain2,
+                this.FedMain3
             };
 
             this.ApplyConfigParametersToNodes();
@@ -140,7 +139,7 @@ namespace Stratis.FederatedPeg.IntegrationTests.Utils
             this.StartMainNodes();
             this.StartSideNodes();
 
-            TestHelper.WaitLoop(() => this.FedMain1.State == CoreNodeState.Running && this.FedSide1.State == CoreNodeState.Running);
+            TestHelper.WaitLoop(() => this.FedMain3.State == CoreNodeState.Running && this.FedSide3.State == CoreNodeState.Running);
 
             this.ConnectMainChainNodes();
             this.ConnectSideChainNodes();
@@ -148,59 +147,56 @@ namespace Stratis.FederatedPeg.IntegrationTests.Utils
 
         public void StartMainNodes()
         {
-            this.FedMain1.Start();
-            //foreach (CoreNode node in this.MainChainNodes)
-            //{
-            //    node.Start();
-            //}
+            foreach (CoreNode node in this.MainChainNodes)
+            {
+                node.Start();
+            }
         }
 
         public void StartSideNodes()
         {
-            this.SideUser.Start();
-            this.FedSide1.Start();
-            //foreach (CoreNode node in this.SideChainNodes)
-            //{
-            //    node.Start();
-            //}
+            foreach (CoreNode node in this.SideChainNodes)
+            {
+                node.Start();
+            }
         }
 
         public void ConnectMainChainNodes()
         {
-            //TestHelper.Connect(this.MainUser, this.FedMain1);
-            //TestHelper.Connect(this.MainUser, this.FedMain2);
-            //TestHelper.Connect(this.MainUser, this.FedMain3);
+            TestHelper.Connect(this.MainUser, this.FedMain1);
+            TestHelper.Connect(this.MainUser, this.FedMain2);
+            TestHelper.Connect(this.MainUser, this.FedMain3);
 
-            //TestHelper.Connect(this.FedMain1, this.MainUser);
-            //TestHelper.Connect(this.FedMain1, this.FedMain2);
-            //TestHelper.Connect(this.FedMain1, this.FedMain3);
+            TestHelper.Connect(this.FedMain1, this.MainUser);
+            TestHelper.Connect(this.FedMain1, this.FedMain2);
+            TestHelper.Connect(this.FedMain1, this.FedMain3);
 
-            //TestHelper.Connect(this.FedMain2, this.MainUser);
-            //TestHelper.Connect(this.FedMain2, this.FedMain1);
-            //TestHelper.Connect(this.FedMain2, this.FedMain3);
+            TestHelper.Connect(this.FedMain2, this.MainUser);
+            TestHelper.Connect(this.FedMain2, this.FedMain1);
+            TestHelper.Connect(this.FedMain2, this.FedMain3);
 
-            //TestHelper.Connect(this.FedMain3, this.MainUser);
-            //TestHelper.Connect(this.FedMain3, this.FedMain1);
-            //TestHelper.Connect(this.FedMain3, this.FedMain2);
+            TestHelper.Connect(this.FedMain3, this.MainUser);
+            TestHelper.Connect(this.FedMain3, this.FedMain1);
+            TestHelper.Connect(this.FedMain3, this.FedMain2);
         }
 
         public void ConnectSideChainNodes()
         {
             TestHelper.Connect(this.SideUser, this.FedSide1);
-            //TestHelper.Connect(this.SideUser, this.FedSide2);
-            //TestHelper.Connect(this.SideUser, this.FedSide3);
+            TestHelper.Connect(this.SideUser, this.FedSide2);
+            TestHelper.Connect(this.SideUser, this.FedSide3);
 
             TestHelper.Connect(this.FedSide1, this.SideUser);
-            //TestHelper.Connect(this.FedSide1, this.FedSide2);
-            //TestHelper.Connect(this.FedSide1, this.FedSide3);
+            TestHelper.Connect(this.FedSide1, this.FedSide2);
+            TestHelper.Connect(this.FedSide1, this.FedSide3);
 
-            //TestHelper.Connect(this.FedSide2, this.SideUser);
-            //TestHelper.Connect(this.FedSide2, this.FedSide1);
-            //TestHelper.Connect(this.FedSide2, this.FedSide3);
+            TestHelper.Connect(this.FedSide2, this.SideUser);
+            TestHelper.Connect(this.FedSide2, this.FedSide1);
+            TestHelper.Connect(this.FedSide2, this.FedSide3);
 
-            //TestHelper.Connect(this.FedSide3, this.SideUser);
-            //TestHelper.Connect(this.FedSide3, this.FedSide1);
-            //TestHelper.Connect(this.FedSide3, this.FedSide2);
+            TestHelper.Connect(this.FedSide3, this.SideUser);
+            TestHelper.Connect(this.FedSide3, this.FedSide1);
+            TestHelper.Connect(this.FedSide3, this.FedSide2);
         }
 
         public void EnableMainFedWallets()
@@ -308,7 +304,7 @@ namespace Stratis.FederatedPeg.IntegrationTests.Utils
                 });
         }
 
-        public async Task<string> SendCreateContractTransaction(CoreNode node, 
+        public async Task<string> SendCreateContractTransaction(CoreNode node,
             byte[] contractCode,
             double amount,
             string sender,
@@ -394,51 +390,51 @@ namespace Stratis.FederatedPeg.IntegrationTests.Utils
         private void ApplyConfigParametersToNodes()
         {
             this.AppendToConfig(this.FedSide1, $"{ConfigSideChain}=1");
-            //this.AppendToConfig(this.FedSide2, $"{ConfigSideChain}=1");
-            //this.AppendToConfig(this.FedSide3, $"{ConfigSideChain}=1");
+            this.AppendToConfig(this.FedSide2, $"{ConfigSideChain}=1");
+            this.AppendToConfig(this.FedSide3, $"{ConfigSideChain}=1");
 
             this.AppendToConfig(this.FedMain1, $"{ConfigMainChain}=1");
-            //this.AppendToConfig(this.FedMain2, $"{ConfigMainChain}=1");
-            //this.AppendToConfig(this.FedMain3, $"{ConfigMainChain}=1");
+            this.AppendToConfig(this.FedMain2, $"{ConfigMainChain}=1");
+            this.AppendToConfig(this.FedMain3, $"{ConfigMainChain}=1");
 
             this.AppendToConfig(this.FedSide1, $"mindepositconfirmations=5");
-            //this.AppendToConfig(this.FedSide2, $"mindepositconfirmations=5");
-            //this.AppendToConfig(this.FedSide3, $"mindepositconfirmations=5");
+            this.AppendToConfig(this.FedSide2, $"mindepositconfirmations=5");
+            this.AppendToConfig(this.FedSide3, $"mindepositconfirmations=5");
 
             this.AppendToConfig(this.FedMain1, $"mindepositconfirmations=5");
-            //this.AppendToConfig(this.FedMain2, $"mindepositconfirmations=5");
-            //this.AppendToConfig(this.FedMain3, $"mindepositconfirmations=5");
+            this.AppendToConfig(this.FedMain2, $"mindepositconfirmations=5");
+            this.AppendToConfig(this.FedMain3, $"mindepositconfirmations=5");
 
             this.AppendToConfig(this.FedSide1, $"mincoinmaturity=5");
-            //this.AppendToConfig(this.FedSide2, $"mincoinmaturity=5");
-            //this.AppendToConfig(this.FedSide3, $"mincoinmaturity=5");
+            this.AppendToConfig(this.FedSide2, $"mincoinmaturity=5");
+            this.AppendToConfig(this.FedSide3, $"mincoinmaturity=5");
 
             this.AppendToConfig(this.FedMain1, $"mincoinmaturity=5");
-            //this.AppendToConfig(this.FedMain2, $"mincoinmaturity=5");
-            //this.AppendToConfig(this.FedMain3, $"mincoinmaturity=5");
+            this.AppendToConfig(this.FedMain2, $"mincoinmaturity=5");
+            this.AppendToConfig(this.FedMain3, $"mincoinmaturity=5");
 
             this.AppendToConfig(this.FedSide1, $"{FederationGatewaySettings.RedeemScriptParam}={this.scriptAndAddresses.payToMultiSig.ToString()}");
-            //this.AppendToConfig(this.FedSide2, $"{FederationGatewaySettings.RedeemScriptParam}={this.scriptAndAddresses.payToMultiSig.ToString()}");
-            //this.AppendToConfig(this.FedSide3, $"{FederationGatewaySettings.RedeemScriptParam}={this.scriptAndAddresses.payToMultiSig.ToString()}");
+            this.AppendToConfig(this.FedSide2, $"{FederationGatewaySettings.RedeemScriptParam}={this.scriptAndAddresses.payToMultiSig.ToString()}");
+            this.AppendToConfig(this.FedSide3, $"{FederationGatewaySettings.RedeemScriptParam}={this.scriptAndAddresses.payToMultiSig.ToString()}");
 
             this.AppendToConfig(this.FedMain1, $"{FederationGatewaySettings.RedeemScriptParam}={this.scriptAndAddresses.payToMultiSig.ToString()}");
-            //this.AppendToConfig(this.FedMain2, $"{FederationGatewaySettings.RedeemScriptParam}={this.scriptAndAddresses.payToMultiSig.ToString()}");
-            //this.AppendToConfig(this.FedMain3, $"{FederationGatewaySettings.RedeemScriptParam}={this.scriptAndAddresses.payToMultiSig.ToString()}");
+            this.AppendToConfig(this.FedMain2, $"{FederationGatewaySettings.RedeemScriptParam}={this.scriptAndAddresses.payToMultiSig.ToString()}");
+            this.AppendToConfig(this.FedMain3, $"{FederationGatewaySettings.RedeemScriptParam}={this.scriptAndAddresses.payToMultiSig.ToString()}");
 
             this.AppendToConfig(this.FedSide1, $"{FederationGatewaySettings.PublicKeyParam}={this.pubKeysByMnemonic[this.mnemonics[0]].ToString()}");
-            //this.AppendToConfig(this.FedSide2, $"{FederationGatewaySettings.PublicKeyParam}={this.pubKeysByMnemonic[this.mnemonics[1]].ToString()}");
-            //this.AppendToConfig(this.FedSide3, $"{FederationGatewaySettings.PublicKeyParam}={this.pubKeysByMnemonic[this.mnemonics[2]].ToString()}");
+            this.AppendToConfig(this.FedSide2, $"{FederationGatewaySettings.PublicKeyParam}={this.pubKeysByMnemonic[this.mnemonics[1]].ToString()}");
+            this.AppendToConfig(this.FedSide3, $"{FederationGatewaySettings.PublicKeyParam}={this.pubKeysByMnemonic[this.mnemonics[2]].ToString()}");
 
             this.AppendToConfig(this.FedMain1, $"{FederationGatewaySettings.PublicKeyParam}={this.pubKeysByMnemonic[this.mnemonics[0]].ToString()}");
-            //this.AppendToConfig(this.FedMain2, $"{FederationGatewaySettings.PublicKeyParam}={this.pubKeysByMnemonic[this.mnemonics[1]].ToString()}");
-            //this.AppendToConfig(this.FedMain3, $"{FederationGatewaySettings.PublicKeyParam}={this.pubKeysByMnemonic[this.mnemonics[2]].ToString()}");
+            this.AppendToConfig(this.FedMain2, $"{FederationGatewaySettings.PublicKeyParam}={this.pubKeysByMnemonic[this.mnemonics[1]].ToString()}");
+            this.AppendToConfig(this.FedMain3, $"{FederationGatewaySettings.PublicKeyParam}={this.pubKeysByMnemonic[this.mnemonics[2]].ToString()}");
 
-            //this.ApplyFederationIPs(this.FedMain1, this.FedMain2, this.FedMain3);
-            //this.ApplyFederationIPs(this.FedSide1, this.FedSide2, this.FedSide3);
+            this.ApplyFederationIPs(this.FedMain1, this.FedMain2, this.FedMain3);
+            this.ApplyFederationIPs(this.FedSide1, this.FedSide2, this.FedSide3);
 
             this.ApplyCounterChainAPIPort(this.FedMain1, this.FedSide1);
-            //this.ApplyCounterChainAPIPort(this.FedMain2, this.FedSide2);
-            //this.ApplyCounterChainAPIPort(this.FedMain3, this.FedSide3);
+            this.ApplyCounterChainAPIPort(this.FedMain2, this.FedSide2);
+            this.ApplyCounterChainAPIPort(this.FedMain3, this.FedSide3);
 
             this.ApplyAgentPrefixToNodes();
         }
