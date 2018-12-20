@@ -172,6 +172,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stratis.FederatedPeg.Featur
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stratis.FederatedPeg.IntegrationTests", "Stratis.FederatedPeg.IntegrationTests\Stratis.FederatedPeg.IntegrationTests.csproj", "{995CBB57-9A31-42E8-8E2A-1C992C9F4F62}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Stratis.SidechainD", "Stratis.SidechainD\Stratis.SidechainD.csproj", "{AC8D231B-7C70-4FFF-8DEE-E589BEADC657}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -450,6 +452,10 @@ Global
 		{995CBB57-9A31-42E8-8E2A-1C992C9F4F62}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{995CBB57-9A31-42E8-8E2A-1C992C9F4F62}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{995CBB57-9A31-42E8-8E2A-1C992C9F4F62}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC8D231B-7C70-4FFF-8DEE-E589BEADC657}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC8D231B-7C70-4FFF-8DEE-E589BEADC657}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC8D231B-7C70-4FFF-8DEE-E589BEADC657}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC8D231B-7C70-4FFF-8DEE-E589BEADC657}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -515,6 +521,7 @@ Global
 		{9B9F96B5-605C-433E-B355-F6DA35F26382} = {1B9A916F-DDAC-4675-B424-EDEDC1A58231}
 		{EC991A1F-7CA1-49C7-B358-E00D52109DD5} = {15D29FFD-6142-4DC5-AFFD-10BA0CA55C45}
 		{995CBB57-9A31-42E8-8E2A-1C992C9F4F62} = {EAE139C2-B19C-4905-9117-8A4068ABD3D2}
+		{AC8D231B-7C70-4FFF-8DEE-E589BEADC657} = {EAE139C2-B19C-4905-9117-8A4068ABD3D2}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6C780ABA-5872-4B83-AD3F-A5BD423AD907}

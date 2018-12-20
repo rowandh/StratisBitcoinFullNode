@@ -1,0 +1,20 @@
+{
+  "profiles": {
+    "Stratis.SidechainD": {
+      "commandName": "Project",
+      "commandLineArgs": "-testnet -addnode=109.150.17.24 -addnode=80.200.67.186 -addnode=104.211.178.243 -addnode=13.70.81.5 -addnode=51.145.3.121"
+    },
+    "SidechainD with apiport": {
+      "commandName": "Project",
+      "commandLineArgs": "-apiport=39000"
+    },
+    "Stratis.SidechainD - Test": {
+      "commandName": "Project",
+      "commandLineArgs": "-testnet -apiport=39000"
+    },
+    "SidechainD with apiport - Test": {
+      "commandName": "Project",
+      "commandLineArgs": "-testnet -apiport=39000"
+    }
+  }
+}
