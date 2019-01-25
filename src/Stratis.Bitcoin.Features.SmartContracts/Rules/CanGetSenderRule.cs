@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using NBitcoin;
 using Stratis.Bitcoin.Consensus;
@@ -7,12 +6,16 @@ using Stratis.Bitcoin.Consensus.Rules;
 using Stratis.Bitcoin.Features.Consensus.CoinViews;
 using Stratis.Bitcoin.Features.Consensus.Rules;
 using Stratis.Bitcoin.Features.MemoryPool;
-using Stratis.SmartContracts.Core;
 using Stratis.SmartContracts.Core.Util;
 using Block = NBitcoin.Block;
 
 namespace Stratis.Bitcoin.Features.SmartContracts.Rules
 {
+    /// <summary>
+    /// Verifies that the address of the sender of a smart contract transaction can be obtained. Uses a
+    /// <see cref="ISenderRetriever"/> instance to extract the sender's address from a P2PK or P2PKH
+    /// scriptpubkey.
+    /// </summary>
     public class CanGetSenderRule : UtxoStoreConsensusRule, ISmartContractMempoolRule
     {
         private readonly ISenderRetriever senderRetriever;
