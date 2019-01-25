@@ -39,25 +39,45 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Rules
         private void CheckTransactionInsideBlock(Transaction transaction, ICoinView coinView, IList<Transaction> blockTxs)
         {
             // If wanting to execute a contract, we must be able to get the sender.
-            if (transaction.Outputs.Any(x => x.ScriptPubKey.IsSmartContractExec()))
+            if (transaction.IsSmartContractExecTransaction())
             {
-                GetSenderResult result = this.senderRetriever.GetSender(transaction, coinView, blockTxs);
-                if (!result.Success)
-                    new ConsensusError("cant-get-sender", "smart contract output without a P2PKH as the first input to the tx.").Throw();
+                try
+                {
+                    GetSenderResult result = this.senderRetriever.GetSender(transaction, coinView, blockTxs);
+
+                    if (!result.Success)
+                        this.Throw();
+                }
+                catch
+                {
+                    this.Throw();
+                }
             }
         }
 
         public void CheckTransaction(MempoolValidationContext context)
         {
             // If wanting to execute a contract, we must be able to get the sender.
-            if (context.Transaction.Outputs.Any(x => x.ScriptPubKey.IsSmartContractExec()))
+            if (context.Transaction.IsSmartContractExecTransaction())
             {
-                GetSenderResult result = this.senderRetriever.GetSender(context.Transaction, context.View);
-                if (!result.Success)
-                    new ConsensusError("cant-get-sender", "smart contract output without a P2PKH as the first input to the tx.").Throw();
+                try
+                {
+                    GetSenderResult result = this.senderRetriever.GetSender(context.Transaction, context.View);
+
+                    if (!result.Success)
+                        this.Throw();
+                }
+                catch
+                {
+                    this.Throw();
+                }
             }
         }
 
+        private void Throw()
+        {
+            new ConsensusError("cant-get-sender", "smart contract output without a P2PKH as the first input to the tx.").Throw();
+        }
     }
 }
 
