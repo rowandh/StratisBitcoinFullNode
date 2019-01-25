@@ -91,5 +91,25 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests.Consensus.Rules
             block.AddTransaction(transaction);
             await Assert.ThrowsAnyAsync<ConsensusErrorException>(() => this.rule.RunAsync(new RuleContext(new ValidationContext { BlockToValidate = block }, DateTimeOffset.Now)));
         }
+
+        [Fact]
+        public async Task GetSender_ThrowsException_Rule_Exception_Should_Be_Correct_Type()
+        {
+            this.senderRetriever.Setup(x => x.GetSender(It.IsAny<Transaction>(), It.IsAny<MempoolCoinView>()))
+                .Throws(new Exception());
+            this.senderRetriever.Setup(x => x.GetSender(It.IsAny<Transaction>(), It.IsAny<ICoinView>(), It.IsAny<IList<Transaction>>()))
+                .Throws(new Exception());
+
+            Transaction transaction = this.network.CreateTransaction();
+            transaction.Outputs.Add(new TxOut(100, new Script(new byte[] { (byte)ScOpcodeType.OP_CREATECONTRACT })));
+
+            // Mempool check fails
+            Assert.ThrowsAny<ConsensusErrorException>(() => this.rule.CheckTransaction(new MempoolValidationContext(transaction, new MempoolValidationState(false))));
+
+            // Block validation check fails
+            Block block = this.network.CreateBlock();
+            block.AddTransaction(transaction);
+            await Assert.ThrowsAnyAsync<ConsensusErrorException>(() => this.rule.RunAsync(new RuleContext(new ValidationContext { BlockToValidate = block }, DateTimeOffset.Now)));
+        }
     }
 }
