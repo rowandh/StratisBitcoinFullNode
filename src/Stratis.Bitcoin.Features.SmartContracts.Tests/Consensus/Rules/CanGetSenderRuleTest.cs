@@ -51,7 +51,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests.Consensus.Rules
         }
 
         [Fact]
-        public void P2PKH_GetSender_Passes()
+        public async Task P2PKH_GetSender_Passes()
         {
             var successResult = GetSenderResult.CreateSuccess(new uint160(0));
             this.senderRetriever.Setup(x => x.GetSender(It.IsAny<Transaction>(), It.IsAny<MempoolCoinView>()))
@@ -68,11 +68,11 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests.Consensus.Rules
             // Block validation check works
             Block block = this.network.CreateBlock();
             block.AddTransaction(transaction);
-            this.rule.RunAsync(new RuleContext(new ValidationContext {BlockToValidate = block}, DateTimeOffset.Now));
+            await this.rule.RunAsync(new RuleContext(new ValidationContext {BlockToValidate = block}, DateTimeOffset.Now));
         }
 
         [Fact]
-        public void P2PKH_GetSender_Fails()
+        public async Task P2PKH_GetSender_Fails()
         {
             var failResult = GetSenderResult.CreateFailure("String error");
             this.senderRetriever.Setup(x => x.GetSender(It.IsAny<Transaction>(), It.IsAny<MempoolCoinView>()))
@@ -89,7 +89,7 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Tests.Consensus.Rules
             // Block validation check fails
             Block block = this.network.CreateBlock();
             block.AddTransaction(transaction);
-            Assert.ThrowsAnyAsync<ConsensusErrorException>(() => this.rule.RunAsync(new RuleContext(new ValidationContext { BlockToValidate = block }, DateTimeOffset.Now)));
+            await Assert.ThrowsAnyAsync<ConsensusErrorException>(() => this.rule.RunAsync(new RuleContext(new ValidationContext { BlockToValidate = block }, DateTimeOffset.Now)));
         }
     }
 }
