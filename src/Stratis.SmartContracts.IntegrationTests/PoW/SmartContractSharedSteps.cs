@@ -9,6 +9,9 @@ namespace Stratis.SmartContracts.IntegrationTests.PoW
     {
         public static void SendTransaction(CoreNode scSender, CoreNode scReceiver, SmartContractWalletController senderWalletController, string responseHex)
         {
+            // Avoids a scenario where an SC transaction hits a node and attempts to reference a coinbase that does not exist in the coinview yet.
+            TestHelper.WaitLoop(() => TestHelper.AreNodesSynced(scReceiver, scSender));
+
             senderWalletController.SendTransaction(new SendTransactionRequest
             {
                 Hex = responseHex
