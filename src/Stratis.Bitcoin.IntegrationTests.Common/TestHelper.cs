@@ -28,16 +28,28 @@ namespace Stratis.Bitcoin.IntegrationTests.Common
                 cancellationToken = new CancellationTokenSource(Debugger.IsAttached ? 15 * 60 * 1000 : waitTimeSeconds * 1000).Token;
             }
 
-            while (!act())
+            cancellationToken.ThrowIfCancellationRequested();
+
+            while (true)
             {
                 try
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
+                    // If the execution was successful we can return.
+                    if (act())
+                    {
+                        return;
+                    }
+
+                    // Retry in retryDelayMilliseconds
                     Thread.Sleep(retryDelayInMiliseconds);
                 }
                 catch (OperationCanceledException e)
                 {
-                    Assert.False(true, $"{failureReason}{Environment.NewLine}{e.Message} [{e.InnerException?.Message}]");
+                    Assert.False(true, $"{failureReason}{Environment.NewLine}{e.Message}");
+                }
+                catch (Exception e)
+                {
+                    Assert.False(true, $"Exception thrown: {Environment.NewLine}{e.Message} [{e.InnerException?.Message}]");
                 }
             }
         }
