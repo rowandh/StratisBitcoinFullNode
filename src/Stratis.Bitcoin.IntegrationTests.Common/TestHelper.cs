@@ -420,21 +420,14 @@ namespace Stratis.Bitcoin.IntegrationTests.Common
         {
             var cancellation = new CancellationTokenSource((int)TimeSpan.FromSeconds(30).TotalMilliseconds);
 
+            if (IsNodeConnectedTo(thisNode, connectToNode))
+                return;
+
             WaitLoop(() =>
             {
-                try
-                {
-                    if (IsNodeConnectedTo(thisNode, connectToNode))
-                        return true;
+                thisNode.CreateRPCClient().AddNode(connectToNode.Endpoint, true);
 
-                    thisNode.CreateRPCClient().AddNode(connectToNode.Endpoint, true);
-                }
-                catch (Exception)
-                {
-                    // The connect request failed, probably due to a web exception so try again.
-                }
-
-                return false;
+                return IsNodeConnectedTo(thisNode, connectToNode);
 
             }, retryDelayInMiliseconds: 500, cancellationToken: cancellation.Token);
         }
