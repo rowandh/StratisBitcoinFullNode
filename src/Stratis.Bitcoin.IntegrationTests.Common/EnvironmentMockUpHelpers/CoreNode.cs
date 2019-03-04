@@ -330,12 +330,13 @@ namespace Stratis.Bitcoin.IntegrationTests.Common.EnvironmentMockUpHelpers
             {
                 try
                 {
-                    CreateRPCClient().GetBlockHashAsync(0).GetAwaiter().GetResult();
+                    var result = CreateRPCClient().GetBlockHashAsync(0).GetAwaiter().GetResult();
                     this.State = CoreNodeState.Running;
                     return true;
                 }
-                catch
+                catch (Exception e)
                 {
+                    Console.WriteLine("Exception in waitloop: " + e);
                     return false;
                 }
             }, cancellationToken: cancellationToken,
