@@ -38,7 +38,12 @@ namespace Stratis.Bitcoin.IntegrationTests.Common
                 }
                 catch (OperationCanceledException e)
                 {
-                    Assert.False(true, $"{failureReason}{Environment.NewLine}{e.Message} [{e.InnerException?.Message}]");
+                    Assert.False(true,
+                        $"{failureReason}{Environment.NewLine}{e.Message} [{e.InnerException?.Message}]");
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Exception in waitloop: " + e);
                 }
             }
         }
@@ -423,7 +428,7 @@ namespace Stratis.Bitcoin.IntegrationTests.Common
 
                     thisNode.CreateRPCClient().AddNode(connectToNode.Endpoint, true);
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
                     // The connect request failed, probably due to a web exception so try again.
                 }
