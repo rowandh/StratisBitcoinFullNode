@@ -227,7 +227,7 @@ namespace Stratis.Features.FederatedPeg.Wallet
             // Get total spendable balance in the account.
             long balance = context.UnspentOutputs.Sum(t => t.Transaction.Amount);
             long totalToSend = context.Recipients.Sum(s => s.Amount);
-            if (balance < totalToSend)
+            if (balance < totalToSend + context.TransactionFee)
                 throw new WalletException("Not enough funds.");
 
             if (context.SelectedInputs.Any())
