@@ -19,6 +19,8 @@ namespace Stratis.Features.FederatedPeg
         /// <param name="secrets">List of mnemonic-passphrase pairs</param>
         /// <returns>The new transaction.</returns>
         Transaction BuildTransaction(TransactionBuildContext context, SecretModel[] secrets);
+
+        Transaction BuildTransaction(BuildMultisigTransactionRequest request);
     }
 
     /// <summary>
@@ -82,6 +84,11 @@ namespace Stratis.Features.FederatedPeg
             string errorsMessage = string.Join(" - ", errors.Select(s => s.ToString()));
             LoggerExtensions.LogError(this.logger, $"Build transaction failed: {errorsMessage}");
             throw new WalletException($"Could not build the transaction. Details: {errorsMessage}");
+        }
+
+        public Transaction BuildTransaction(BuildMultisigTransactionRequest request)
+        {
+            throw new System.NotImplementedException();
         }
 
         /// <summary>
