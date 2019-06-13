@@ -3,11 +3,12 @@ using System.Linq;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
 using NBitcoin.Policy;
+using Stratis.Bitcoin.Features.Wallet;
 using Stratis.Bitcoin.Features.Wallet.Interfaces;
 using Stratis.Bitcoin.Features.Wallet.Models;
 using Stratis.Bitcoin.Utilities;
 
-namespace Stratis.Bitcoin.Features.Wallet
+namespace Stratis.Features.FederatedPeg
 {
     /// <summary>
     /// A handler that has various functionalities related to transaction operations.
@@ -68,7 +69,7 @@ namespace Stratis.Bitcoin.Features.Wallet
                 return combinedTransaction;
 
             string errorsMessage = string.Join(" - ", errors.Select(s => s.ToString()));
-            this.logger.LogError($"Build transaction failed: {errorsMessage}");
+            LoggerExtensions.LogError(this.logger, $"Build transaction failed: {errorsMessage}");
             throw new WalletException($"Could not build the transaction. Details: {errorsMessage}");
         }
 
