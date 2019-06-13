@@ -5,6 +5,7 @@ using NBitcoin;
 using NBitcoin.Policy;
 using Stratis.Bitcoin.Features.Wallet;
 using Stratis.Bitcoin.Features.Wallet.Interfaces;
+using Stratis.Bitcoin.Features.Wallet.Models;
 using Stratis.Bitcoin.Utilities;
 using Stratis.Features.FederatedPeg.Models;
 
@@ -88,7 +89,36 @@ namespace Stratis.Features.FederatedPeg
 
         public Transaction BuildTransaction(BuildMultisigTransactionRequest request)
         {
-            throw new System.NotImplementedException();
+            var recipients = new List<Recipient>();
+            foreach (RecipientModel recipientModel in request.Recipients)
+            {
+                recipients.Add(new Recipient
+                {
+                    ScriptPubKey = BitcoinAddress.Create(recipientModel.DestinationAddress, this.network).ScriptPubKey,
+                    Amount = recipientModel.Amount
+                });
+            }
+
+            var context = new TransactionBuildContext(this.network)
+            {
+                AccountReference = new WalletAccountReference(request.WalletName, request.AccountName),
+                TransactionFee = string.IsNullOrEmpty(request.FeeAmount) ? null : Money.Parse(request.FeeAmount),
+                MinConfirmations = request.AllowUnconfirmed ? 0 : 1,
+                Shuffle = request.ShuffleOutputs ?? true, // We shuffle transaction outputs by default as it's better for anonymity.
+                OpReturnData = request.OpReturnData,
+                OpReturnAmount = string.IsNullOrEmpty(request.OpReturnAmount) ? null : Money.Parse(request.OpReturnAmount),
+                WalletPassword = request.Password,
+                SelectedInputs = request.Outpoints?.Select(u => new OutPoint(uint256.Parse(u.TransactionId), u.Index)).ToList(),
+                AllowOtherInputs = false,
+                Recipients = recipients
+            };
+
+            if (!string.IsNullOrEmpty(request.FeeType))
+            {
+                context.FeeType = FeeParser.Parse(request.FeeType);
+            }
+
+            return this.BuildTransaction(context, request.Secrets);
         }
 
         /// <summary>
