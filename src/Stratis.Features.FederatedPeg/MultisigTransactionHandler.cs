@@ -5,8 +5,8 @@ using NBitcoin;
 using NBitcoin.Policy;
 using Stratis.Bitcoin.Features.Wallet;
 using Stratis.Bitcoin.Features.Wallet.Interfaces;
-using Stratis.Bitcoin.Features.Wallet.Models;
 using Stratis.Bitcoin.Utilities;
+using Stratis.Features.FederatedPeg.Models;
 
 namespace Stratis.Features.FederatedPeg
 {
