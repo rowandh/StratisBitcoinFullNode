@@ -82,7 +82,7 @@ namespace Stratis.Features.FederatedPeg
 
                 //multiSigContext.Recipients = new List<Recipient> { recipient.WithPaymentReducedByFee(FederatedPegSettings.CrossChainTransferFee) }; // The fee known to the user is taken.
 
-                (List<Coin> _, List<Wallet.UnspentOutputReference> unspentOutputs) = FederationWalletTransactionHandler.DetermineCoins(this.federationWalletManager, this.network, multiSigContext, this.federatedPegSettings);
+                (List<Coin> coins, List<Wallet.UnspentOutputReference> unspentOutputs) = FederationWalletTransactionHandler.DetermineCoins(this.federationWalletManager, this.network, multiSigContext, this.federatedPegSettings);
 
                 //multiSigContext.TransactionFee = this.federatedPegSettings.GetWithdrawalTransactionFee(coins.Count); // The "actual fee". Everything else goes to the fed.
                 multiSigContext.SelectedInputs = unspentOutputs.Select(u => u.ToOutPoint()).ToList();
@@ -98,19 +98,22 @@ namespace Stratis.Features.FederatedPeg
                     .Select(secret => new Mnemonic(secret.Mnemonic).DeriveExtKey(secret.Passphrase).PrivateKey)
                     .ToArray();
 
-                var txBuilder = new TransactionBuilder(this.network);
 
-                txBuilder.AddKeys(privateKeys);
+                //txBuilder.AddKeys(privateKeys);
 
-                Transaction signedTransaction = txBuilder.SignTransaction(transaction);
-
-                if (this.federationWalletManager.ValidateTransaction(signedTransaction, true))
+                var signed = privateKeys.Select(pk =>
                 {
-                    return signedTransaction;
+                    var txBuilder = new TransactionBuilder(this.network);
+                    txBuilder.AddKeys(pk);
+                    return txBuilder.SignTransaction(transaction);
+                })
+                .ToArray();
 
-                }
+                var combined = new TransactionBuilder(this.network).CombineSignatures(signed);
+
+                var fee = transaction.GetFee(coins.Cast<ICoin>().ToArray());
                 
-                return null;
+                return combined;
             }
             catch (Exception error)
             {
