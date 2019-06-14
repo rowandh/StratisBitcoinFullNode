@@ -1,13 +1,17 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using NBitcoin;
 using NBitcoin.Policy;
 using Stratis.Bitcoin.Features.Wallet;
 using Stratis.Bitcoin.Features.Wallet.Interfaces;
-using Stratis.Bitcoin.Features.Wallet.Models;
 using Stratis.Bitcoin.Utilities;
+using Stratis.Features.FederatedPeg.Interfaces;
 using Stratis.Features.FederatedPeg.Models;
+using Stratis.Features.FederatedPeg.TargetChain;
+using Stratis.Features.FederatedPeg.Wallet;
+using TransactionBuildContext = Stratis.Bitcoin.Features.Wallet.TransactionBuildContext;
 
 namespace Stratis.Features.FederatedPeg
 {
@@ -29,6 +33,11 @@ namespace Stratis.Features.FederatedPeg
     /// </summary>
     public class MultisigTransactionHandler : WalletTransactionHandler, IMultisigTransactionHandler
     {
+        private readonly IFederationWalletTransactionHandler federationWalletTransactionHandler;
+
+        private readonly IFederationWalletManager federationWalletManager;
+        private readonly IFederatedPegSettings federatedPegSettings;
+
         private readonly ILogger logger;
 
         private readonly Network network;
@@ -44,9 +53,15 @@ namespace Stratis.Features.FederatedPeg
             IWalletManager walletManager,
             IWalletFeePolicy walletFeePolicy,
             Network network,
-            StandardTransactionPolicy transactionPolicy)
+            StandardTransactionPolicy transactionPolicy,
+            IFederationWalletTransactionHandler federationWalletTransactionHandler,
+            IFederationWalletManager federationWalletManager,
+            IFederatedPegSettings federatedPegSettings)
             : base(loggerFactory, walletManager, walletFeePolicy, network, transactionPolicy)
         {
+            this.federationWalletTransactionHandler = federationWalletTransactionHandler;
+            this.federationWalletManager = federationWalletManager;
+            this.federatedPegSettings = federatedPegSettings;
             this.logger = loggerFactory.CreateLogger(this.GetType().FullName);
         }
 
@@ -58,8 +73,8 @@ namespace Stratis.Features.FederatedPeg
 
             this.InitializeTransactionBuilder(context);
 
-            if (context.Shuffle)
-                context.TransactionBuilder.Shuffle();
+            //if (context.Shuffle)
+            //    context.TransactionBuilder.Shuffle();
 
             Transaction unsignedTransaction = context.TransactionBuilder.BuildTransaction(false);
 
@@ -77,6 +92,7 @@ namespace Stratis.Features.FederatedPeg
                 signedTransactions.Add(transaction);
             }
 
+            context.TransactionBuilder.SignTransaction(unsignedTransaction);
             Transaction combinedTransaction = context.TransactionBuilder.CombineSignatures(signedTransactions.ToArray());
 
             if (context.TransactionBuilder.Verify(combinedTransaction, out TransactionPolicyError[] errors))
@@ -89,36 +105,82 @@ namespace Stratis.Features.FederatedPeg
 
         public Transaction BuildTransaction(BuildMultisigTransactionRequest request)
         {
-            var recipients = new List<Recipient>();
-            foreach (RecipientModel recipientModel in request.Recipients)
+            // Builds a transaction on mainnet for withdrawing federation funds
+            try
             {
-                recipients.Add(new Recipient
+                List<Wallet.Recipient> recipients = request
+                    .Recipients
+                    .Select(recipientModel => new Wallet.Recipient
+                    {
+                        ScriptPubKey = BitcoinAddress.Create(recipientModel.DestinationAddress, this.network).ScriptPubKey,
+                        Amount = recipientModel.Amount
+                    })
+                    .ToList();
+
+                // Build the multisig transaction template.
+                string walletPassword = this.federationWalletManager.Secret.WalletPassword;
+
+                //bool sign = (walletPassword ?? "") != "";
+
+                var multiSigContext = new Wallet.TransactionBuildContext(recipients)
                 {
-                    ScriptPubKey = BitcoinAddress.Create(recipientModel.DestinationAddress, this.network).ScriptPubKey,
-                    Amount = recipientModel.Amount
-                });
+                    MinConfirmations = WithdrawalTransactionBuilder.MinConfirmations,
+                    Shuffle = false,
+                    IgnoreVerify = true,
+                    WalletPassword = walletPassword,
+                    Sign = true,
+                    //Time = this.network.Consensus.IsProofOfStake ? blockTime : (uint?)null
+                };
+
+                //multiSigContext.Recipients = new List<Recipient> { recipient.WithPaymentReducedByFee(FederatedPegSettings.CrossChainTransferFee) }; // The fee known to the user is taken.
+
+                (List<Coin> _, List<Wallet.UnspentOutputReference> unspentOutputs) = FederationWalletTransactionHandler.DetermineCoins(this.federationWalletManager, this.network, multiSigContext, this.federatedPegSettings);
+
+                //multiSigContext.TransactionFee = this.federatedPegSettings.GetWithdrawalTransactionFee(coins.Count); // The "actual fee". Everything else goes to the fed.
+                multiSigContext.SelectedInputs = unspentOutputs.Select(u => u.ToOutPoint()).ToList();
+                multiSigContext.AllowOtherInputs = false;
+
+                // Build the unsigned transaction.
+                Transaction transaction = this.federationWalletTransactionHandler.BuildTransaction(multiSigContext);
+
+                this.logger.LogDebug("transaction = {0}", transaction.ToString(this.network, RawFormat.BlockExplorer));
+
+                Key[] privateKeys = request
+                    .Secrets
+                    .Select(secret => new Mnemonic(secret.Mnemonic).DeriveExtKey(secret.Passphrase).PrivateKey)
+                    .ToArray();
+
+                var txBuilder = new TransactionBuilder(this.network);
+
+                txBuilder.AddKeys(privateKeys);
+
+                Transaction signedTransaction = txBuilder.SignTransaction(transaction);
+
+                if (this.federationWalletManager.ValidateTransaction(signedTransaction, true))
+                {
+                    return signedTransaction;
+
+                }
+                
+                return null;
+            }
+            catch (Exception error)
+            {
+                if (error is WalletException walletException &&
+                    (walletException.Message == FederationWalletTransactionHandler.NoSpendableTransactionsMessage
+                     || walletException.Message == FederationWalletTransactionHandler.NotEnoughFundsMessage))
+                {
+                    this.logger.LogWarning("Not enough spendable transactions in the wallet. Should be resolved when a pending transaction is included in a block.");
+                }
+                else
+                {
+                    this.logger.LogError("Could not create transaction {0}", error.Message);
+                }
             }
 
-            var context = new TransactionBuildContext(this.network)
-            {
-                AccountReference = new WalletAccountReference(request.WalletName, request.AccountName),
-                TransactionFee = string.IsNullOrEmpty(request.FeeAmount) ? null : Money.Parse(request.FeeAmount),
-                MinConfirmations = request.AllowUnconfirmed ? 0 : 1,
-                Shuffle = request.ShuffleOutputs ?? true, // We shuffle transaction outputs by default as it's better for anonymity.
-                OpReturnData = request.OpReturnData,
-                OpReturnAmount = string.IsNullOrEmpty(request.OpReturnAmount) ? null : Money.Parse(request.OpReturnAmount),
-                WalletPassword = request.Password,
-                SelectedInputs = request.Outpoints?.Select(u => new OutPoint(uint256.Parse(u.TransactionId), u.Index)).ToList(),
-                AllowOtherInputs = false,
-                Recipients = recipients
-            };
+            this.logger.LogTrace("(-)[FAIL]");
 
-            if (!string.IsNullOrEmpty(request.FeeType))
-            {
-                context.FeeType = FeeParser.Parse(request.FeeType);
-            }
-
-            return this.BuildTransaction(context, request.Secrets);
+            return null;
         }
 
         /// <summary>
