@@ -17,7 +17,6 @@ namespace Stratis.Features.FederatedPeg.Models
         [Required(ErrorMessage = "Mnemonic is required.")]
         public string Mnemonic { get; set; }
 
-        [Required(ErrorMessage = "Passphrase is required.")]
         public string Passphrase { get; set; }
     }
 }
