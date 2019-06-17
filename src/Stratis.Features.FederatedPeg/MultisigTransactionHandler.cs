@@ -55,72 +55,45 @@ namespace Stratis.Features.FederatedPeg
         public Transaction BuildTransaction(BuildMultisigTransactionRequest request)
         {
             // Builds a transaction on mainnet for withdrawing federation funds
-            try
+            List<Recipient> recipients = request
+                .Recipients
+                .Select(recipientModel => new Recipient
+                {
+                    ScriptPubKey = BitcoinAddress.Create(recipientModel.DestinationAddress, this.network).ScriptPubKey,
+                    Amount = recipientModel.Amount
+                })
+                .ToList();
+            
+            // FederationWalletTransactionHandler only supports signing with a single key - the fed wallet key.
+            // However we still want to use it to determine what coins we need, so hack this together here to pass in what FederationWalletTransactionHandler.DetermineCoins.
+            var multiSigContext = new Wallet.TransactionBuildContext(recipients)
             {
-                List<Wallet.Recipient> recipients = request
-                    .Recipients
-                    .Select(recipientModel => new Wallet.Recipient
-                    {
-                        ScriptPubKey = BitcoinAddress.Create(recipientModel.DestinationAddress, this.network).ScriptPubKey,
-                        Amount = recipientModel.Amount
-                    })
-                    .ToList();
-                
-                var now = Utils.DateTimeToUnixTime(DateTimeOffset.UtcNow);
+                MinConfirmations = WithdrawalTransactionBuilder.MinConfirmations,
+                IgnoreVerify = true
+            };
 
-                // FederationWalletTransactionHandler only supports signing with a single key - the fed wallet key
-                // However we still want to use it to determine what coins we need, so hack this together here to pass in what FederationWalletTransactionHandler.DetermineCoins
-                var multiSigContext = new Wallet.TransactionBuildContext(recipients)
-                {
-                    MinConfirmations = WithdrawalTransactionBuilder.MinConfirmations,
-                    IgnoreVerify = true
-                };
+            (List<Coin> coins, List<Wallet.UnspentOutputReference> _) = FederationWalletTransactionHandler.DetermineCoins(this.federationWalletManager, this.network, multiSigContext, this.federatedPegSettings);
 
-                (List<Coin> coins, List<Wallet.UnspentOutputReference> unspentOutputs) = FederationWalletTransactionHandler.DetermineCoins(this.federationWalletManager, this.network, multiSigContext, this.federatedPegSettings);
+            Key[] privateKeys = request
+                .Secrets
+                .Select(secret => new Mnemonic(secret.Mnemonic).DeriveExtKey(secret.Passphrase).PrivateKey)
+                .ToArray();
 
-                var transactionBuilder = new TransactionBuilder(this.network);
+            var transactionBuilder = new TransactionBuilder(this.network);
 
-                transactionBuilder.AddCoins(coins);
+            transactionBuilder.AddCoins(coins);
+            transactionBuilder.SetChange(this.federationWalletManager.GetWallet().MultiSigAddress.ScriptPubKey);
+            transactionBuilder.AddKeys(privateKeys);
+            transactionBuilder.SetTimeStamp(Utils.DateTimeToUnixTime(DateTimeOffset.UtcNow));
 
-                MultiSigAddress changeAddress = this.federationWalletManager.GetWallet().MultiSigAddress;
-
-                transactionBuilder.SetChange(changeAddress.ScriptPubKey);
-
-                foreach (Recipient recipient in recipients)
-                {
-                    transactionBuilder.Send(recipient.ScriptPubKey, recipient.Amount);
-                }
-
-                Key[] privateKeys = request
-                    .Secrets
-                    .Select(secret => new Mnemonic(secret.Mnemonic).DeriveExtKey(secret.Passphrase).PrivateKey)
-                    .ToArray();
-
-                transactionBuilder.AddKeys(privateKeys);
-
-                transactionBuilder.SetTimeStamp(now);
-
-                Transaction transaction = transactionBuilder.BuildTransaction(true);
-
-                return transaction;
-            }
-            catch (Exception error)
+            foreach (Recipient recipient in recipients)
             {
-                if (error is WalletException walletException &&
-                    (walletException.Message == FederationWalletTransactionHandler.NoSpendableTransactionsMessage
-                     || walletException.Message == FederationWalletTransactionHandler.NotEnoughFundsMessage))
-                {
-                    this.logger.LogWarning("Not enough spendable transactions in the wallet. Should be resolved when a pending transaction is included in a block.");
-                }
-                else
-                {
-                    this.logger.LogError("Could not create transaction {0}", error.Message);
-                }
+                transactionBuilder.Send(recipient.ScriptPubKey, recipient.Amount);
             }
 
-            this.logger.LogTrace("(-)[FAIL]");
+            Transaction transaction = transactionBuilder.BuildTransaction(true);
 
-            return null;
+            return transaction;
         }
     }
 }
