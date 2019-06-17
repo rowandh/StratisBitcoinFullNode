@@ -11,6 +11,7 @@ using Stratis.Features.FederatedPeg.Interfaces;
 using Stratis.Features.FederatedPeg.Models;
 using Stratis.Features.FederatedPeg.TargetChain;
 using Stratis.Features.FederatedPeg.Wallet;
+using Recipient = Stratis.Features.FederatedPeg.Wallet.Recipient;
 
 namespace Stratis.Features.FederatedPeg
 {
@@ -64,56 +65,44 @@ namespace Stratis.Features.FederatedPeg
                         Amount = recipientModel.Amount
                     })
                     .ToList();
+                
+                var now = Utils.DateTimeToUnixTime(DateTimeOffset.UtcNow);
 
-                // Build the multisig transaction template.
-                string walletPassword = this.federationWalletManager.Secret.WalletPassword;
-
-                //bool sign = (walletPassword ?? "") != "";
-
+                // FederationWalletTransactionHandler only supports signing with a single key - the fed wallet key
+                // However we still want to use it to determine what coins we need, so hack this together here to pass in what FederationWalletTransactionHandler.DetermineCoins
                 var multiSigContext = new Wallet.TransactionBuildContext(recipients)
                 {
                     MinConfirmations = WithdrawalTransactionBuilder.MinConfirmations,
-                    Shuffle = false,
-                    IgnoreVerify = true,
-                    WalletPassword = walletPassword,
-                    Sign = true,
-                    //Time = this.network.Consensus.IsProofOfStake ? blockTime : (uint?)null
+                    IgnoreVerify = true
                 };
-
-                //multiSigContext.Recipients = new List<Recipient> { recipient.WithPaymentReducedByFee(FederatedPegSettings.CrossChainTransferFee) }; // The fee known to the user is taken.
 
                 (List<Coin> coins, List<Wallet.UnspentOutputReference> unspentOutputs) = FederationWalletTransactionHandler.DetermineCoins(this.federationWalletManager, this.network, multiSigContext, this.federatedPegSettings);
 
-                //multiSigContext.TransactionFee = this.federatedPegSettings.GetWithdrawalTransactionFee(coins.Count); // The "actual fee". Everything else goes to the fed.
-                multiSigContext.SelectedInputs = unspentOutputs.Select(u => u.ToOutPoint()).ToList();
-                multiSigContext.AllowOtherInputs = false;
+                var transactionBuilder = new TransactionBuilder(this.network);
 
-                // Build the unsigned transaction.
-                Transaction transaction = this.federationWalletTransactionHandler.BuildTransaction(multiSigContext);
+                transactionBuilder.AddCoins(coins);
 
-                this.logger.LogDebug("transaction = {0}", transaction.ToString(this.network, RawFormat.BlockExplorer));
+                MultiSigAddress changeAddress = this.federationWalletManager.GetWallet().MultiSigAddress;
+
+                transactionBuilder.SetChange(changeAddress.ScriptPubKey);
+
+                foreach (Recipient recipient in recipients)
+                {
+                    transactionBuilder.Send(recipient.ScriptPubKey, recipient.Amount);
+                }
 
                 Key[] privateKeys = request
                     .Secrets
                     .Select(secret => new Mnemonic(secret.Mnemonic).DeriveExtKey(secret.Passphrase).PrivateKey)
                     .ToArray();
 
+                transactionBuilder.AddKeys(privateKeys);
 
-                //txBuilder.AddKeys(privateKeys);
+                transactionBuilder.SetTimeStamp(now);
 
-                var signed = privateKeys.Select(pk =>
-                {
-                    var txBuilder = new TransactionBuilder(this.network);
-                    txBuilder.AddKeys(pk);
-                    return txBuilder.SignTransaction(transaction);
-                })
-                .ToArray();
+                Transaction transaction = transactionBuilder.BuildTransaction(true);
 
-                var combined = new TransactionBuilder(this.network).CombineSignatures(signed);
-
-                var fee = transaction.GetFee(coins.Cast<ICoin>().ToArray());
-                
-                return combined;
+                return transaction;
             }
             catch (Exception error)
             {
