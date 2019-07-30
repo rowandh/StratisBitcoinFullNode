@@ -11,6 +11,7 @@ using Stratis.Bitcoin.Configuration.Logging;
 using Stratis.Bitcoin.Connection;
 using Stratis.Bitcoin.Features.Wallet;
 using Stratis.Bitcoin.Features.Wallet.Broadcasting;
+using Stratis.Bitcoin.Features.Wallet.Controllers;
 using Stratis.Bitcoin.Features.Wallet.Interfaces;
 using Stratis.Bitcoin.Utilities;
 
@@ -108,6 +109,9 @@ namespace Stratis.Bitcoin.Features.SmartContracts.Wallet
     {
         public static IFullNodeBuilder UseSmartContractWallet(this IFullNodeBuilder fullNodeBuilder)
         {
+            // Ensure we add the base wallet feature.
+            fullNodeBuilder.UseWallet();
+
             LoggingConfiguration.RegisterFeatureNamespace<WalletFeature>("smart contract wallet");
 
             fullNodeBuilder.ConfigureFeature(features =>
