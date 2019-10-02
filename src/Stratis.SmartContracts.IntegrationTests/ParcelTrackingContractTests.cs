@@ -39,15 +39,17 @@ namespace Stratis.SmartContracts.IntegrationTests
             this.mockChain.MineBlocks(1);
 
             // Deploy couriers contract.
-            ContractCompilationResult compilationResult = ContractCompiler.Compile(CouriersContract);
-            Assert.True(compilationResult.Success);
-            BuildCreateContractTransactionResponse preResponse = this.node1.SendCreateContractTransaction(compilationResult.Compilation, 0);
+            ContractCompilationResult courierContract = ContractCompiler.Compile(CouriersContract);
+            Assert.True(courierContract.Success);
+            BuildCreateContractTransactionResponse preResponse = this.node1.SendCreateContractTransaction(courierContract.Compilation, 0);
             this.mockChain.WaitAllMempoolCount(1);
             this.mockChain.MineBlocks(1);
             Assert.NotNull(this.node1.GetCode(preResponse.NewContractAddress));
 
             // Deploy ParcelTracking contract.
             ContractCompilationResult parcelTrackingContract = ContractCompiler.Compile(ParcelTrackingContract);
+            Assert.True(parcelTrackingContract.Success);
+
             string[] parameters = new string[] { string.Format("{0}#{1}", (int)MethodParameterDataType.Address, preResponse.NewContractAddress) };
             var response = this.node1.SendCreateContractTransaction(
                 parcelTrackingContract.Compilation,
@@ -59,7 +61,8 @@ namespace Stratis.SmartContracts.IntegrationTests
 
             var courierContractAddress = preResponse.NewContractAddress;
             var parcelContractAddress = response.NewContractAddress;
-            var courierAddress = this.node1.MinerAddress.Address.ToAddress(this.network);
+            var courierBase58Address = this.node1.MinerAddress.Address;
+            var courierAddress = courierBase58Address.ToAddress(this.network);
 
             var storageValue = this.node1.GetStorageValue(courierContractAddress, $"CouriersNameByAddress[0][{courierAddress}]");
 
@@ -81,7 +84,7 @@ namespace Stratis.SmartContracts.IntegrationTests
             Assert.Equal("Test Name", Encoding.UTF8.GetString(storageValue));
 
             // Call locally and check the result.
-            parameters = new string[] { string.Format("{0}#{1}", (int)MethodParameterDataType.Address, this.node1.MinerAddress.Address) };
+            parameters = new string[] { string.Format("{0}#{1}", (int)MethodParameterDataType.Address, courierBase58Address) };
             var localCallResult = this.node1.CallContractMethodLocally("IsCourierRegistered", parcelContractAddress, 0, parameters);
 
             Assert.True((bool)localCallResult.Return);
