@@ -16,6 +16,8 @@ using Stratis.Features.SQLiteWalletRepository.Tables;
 using Stratis.Bitcoin.Interfaces;
 using Script = NBitcoin.Script;
 using ConcurrentCollections;
+using DBreeze.Utils;
+using NBitcoin.DataEncoders;
 
 [assembly: InternalsVisibleTo("Stratis.Features.SQLiteWalletRepository.Tests")]
 
@@ -516,8 +518,8 @@ namespace Stratis.Features.SQLiteWalletRepository
                 AccountIndex = account.AccountIndex,
                 AddressType = addressType,
                 AddressIndex = addressIndex,
-                PubKey = pubKeyScript?.ToHex(),
-                ScriptPubKey = scriptPubKey?.ToHex()
+                PubKey = pubKeyScript?.ToBytes(),
+                ScriptPubKey = scriptPubKey?.ToBytes()
             };
         }
 
@@ -1094,8 +1096,8 @@ namespace Stratis.Features.SQLiteWalletRepository
                         AccountIndex = transactionData.AccountIndex,
                         AddressIndex = transactionData.AddressIndex,
                         AddressType = (int)transactionData.AddressType,
-                        PubKey = "", // pubKey.ScriptPubKey.ToHex(),  - See TODO
-                        ScriptPubKey = transactionData.ScriptPubKey
+                        PubKey = null, // pubKey.ScriptPubKey.ToHex(),  - See TODO
+                        ScriptPubKey = Encoders.Hex.DecodeData(transactionData.ScriptPubKey)
                     })
                 };
             }

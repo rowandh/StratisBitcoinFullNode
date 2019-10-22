@@ -6,8 +6,8 @@
         public int? AccountIndex { get; set; }
         public int? AddressType { get; set; }
         public int? AddressIndex { get; set; }
-        public string ScriptPubKey { get; set; }
-        public string PubKeyScript;
+        public byte[] ScriptPubKey { get; set; }
+        public byte[] PubKeyScript;
 
         public override bool Equals(object obj)
         {

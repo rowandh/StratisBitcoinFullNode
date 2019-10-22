@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using DBreeze.Utils;
 using NBitcoin;
+using NBitcoin.DataEncoders;
 using Stratis.Bitcoin.Features.Wallet;
 using Stratis.Bitcoin.Features.Wallet.Interfaces;
 using Stratis.Bitcoin.Interfaces;
@@ -96,7 +98,7 @@ namespace Stratis.Features.SQLiteWalletRepository.External
                     {
                         // Record our outputs that are being spent.
                         foreach (AddressIdentifier address in addresses)
-                            RecordSpend(block, txIn, address.ScriptPubKey, tx.IsCoinBase | tx.IsCoinStake, blockTime ?? tx.Time, tx.TotalOut, txId, i);
+                            RecordSpend(block, txIn, Encoders.Hex.EncodeData(address.ScriptPubKey), tx.IsCoinBase | tx.IsCoinStake, blockTime ?? tx.Time, tx.TotalOut, txId, i);
 
                         additions = true;
                         addSpendTx = true;
@@ -134,7 +136,7 @@ namespace Stratis.Features.SQLiteWalletRepository.External
                                         AddressIdentifier newAddress = tracker.CreateAddress();
 
                                         // Add the new address to our addresses of interest.
-                                        addressesOfInterest.AddTentative(Script.FromHex(newAddress.ScriptPubKey), newAddress);
+                                        addressesOfInterest.AddTentative(new Script(newAddress.ScriptPubKey), newAddress);
                                     }
                                 }
                             }

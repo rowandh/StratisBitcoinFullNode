@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using DBreeze.Utils;
 using NBitcoin;
 using Stratis.Bitcoin.Features.Wallet.Interfaces;
 using Stratis.Bitcoin.Utilities;
@@ -82,7 +83,7 @@ namespace Stratis.Features.SQLiteWalletRepository
 
             foreach (HDAddress address in addresses)
             {
-                this.Add(Script.FromHex(address.ScriptPubKey));
+                this.Add(address.ScriptPubKey);
             }
         }
 
@@ -95,6 +96,23 @@ namespace Stratis.Features.SQLiteWalletRepository
         {
             string strWalletId = DBParameter.Create(this.walletId);
             string strHex = DBParameter.Create(scriptPubKey.ToHex());
+            var strBytes = scriptPubKey.ToBytes();
+
+            //var query = this.conn.SQLiteConnection.Table<HDAddress>().Where(a => a.ScriptPubKey == strBytes);
+
+            //query = this.walletId != null ? query.Where(a => a.WalletId == this.walletId) : query;
+
+            //var hdAddress = query.FirstOrDefault();
+
+            //var addres2s = new AddressIdentifier
+            //{
+            //    WalletId = hdAddress.WalletId,
+            //    AccountIndex = hdAddress.AccountIndex,
+            //    AddressType = hdAddress.AddressType,
+            //    ScriptPubKey = hdAddress.ScriptPubKey,
+            //    AddressIndex = hdAddress.AddressIndex,
+            //    PubKeyScript = hdAddress.PubKey
+            //};
 
             address = this.conn.FindWithQuery<AddressIdentifier>($@"
                         SELECT  WalletId
@@ -103,11 +121,11 @@ namespace Stratis.Features.SQLiteWalletRepository
                         ,       AddressIndex
                         ,       ScriptPubKey
                         FROM    HDAddress
-                        WHERE   ScriptPubKey = {strHex} {
+                        WHERE   ScriptPubKey = ? {
                     // Restrict to wallet if provided.
                     // "BETWEEN" boosts performance from half a seconds to 2ms.
                     ((this.walletId != null) ? $@"
-                        AND     WalletId BETWEEN {strWalletId} AND {strWalletId}" : "")};");
+                        AND     WalletId BETWEEN {strWalletId} AND {strWalletId}" : "")};", strBytes);
 
             return address != null;
         }

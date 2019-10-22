@@ -79,8 +79,8 @@ namespace Stratis.Features.SQLiteWalletRepository
                 AccountIndex = this.AccountIndex,
                 AddressType = this.AddressType,
                 AddressIndex = addressIndex,
-                ScriptPubKey = PayToPubkeyHashTemplate.Instance.GenerateScriptPubKey(pubKey).ToHex(),
-                PubKeyScript = pubKey.ScriptPubKey.ToHex()
+                ScriptPubKey = PayToPubkeyHashTemplate.Instance.GenerateScriptPubKey(pubKey).ToBytes(),
+                PubKeyScript = pubKey.ScriptPubKey.ToBytes()
             };
         }
     }

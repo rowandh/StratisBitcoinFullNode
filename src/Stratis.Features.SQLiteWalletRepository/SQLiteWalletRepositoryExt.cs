@@ -42,8 +42,8 @@ namespace Stratis.Features.SQLiteWalletRepository
 
         internal static HdAddress ToHdAddress(this SQLiteWalletRepository repo, HDAddress address)
         {
-            var pubKeyScript = (address.PubKey == null) ? null : new Script(Encoders.Hex.DecodeData(address.PubKey)); // P2PK
-            var scriptPubKey = new Script(Encoders.Hex.DecodeData(address.ScriptPubKey));
+            var pubKeyScript = (address.PubKey == null) ? null : new Script(address.PubKey); // P2PK
+            var scriptPubKey = new Script(address.ScriptPubKey);
 
             var res = new HdAddress(null)
             {
@@ -51,7 +51,7 @@ namespace Stratis.Features.SQLiteWalletRepository
                 Index = address.AddressIndex,
                 AddressType = address.AddressType,
                 HdPath = repo.ToHdPath(address.AccountIndex, address.AddressType, address.AddressIndex),
-                ScriptPubKey = new Script(Encoders.Hex.DecodeData(address.ScriptPubKey)),
+                ScriptPubKey = new Script(address.ScriptPubKey),
                 Pubkey = pubKeyScript
             };
 
