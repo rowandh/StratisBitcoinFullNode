@@ -614,6 +614,7 @@ namespace Stratis.Bitcoin.Features.Wallet.Controllers
                     });
                 }
 
+
                 return this.Json(model);
             }
             catch (Exception e)
